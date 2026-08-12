@@ -109,8 +109,8 @@ model to "list your tools" to confirm.
 
 ## Development
 
-The source lives in `src/`; the full specification, research, and test plan
-are in `docs/` (`ASK-TOOL.md`, `BACKGROUND.md`, `IMPLEMENTATION-PLAN.md`).
+The source lives in `src/`; `AGENTS.md` documents the architecture,
+invariants, and development commands.
 
 Tests run through the pi-mono test runner (they reuse its vitest alias graph
 for `@earendil-works/pi-*`):

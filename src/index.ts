@@ -6,7 +6,7 @@
  * (or by copying this package into `~/.pi/agent/extensions/`).
  *
  * Port of omp's ask tool (`oh-my-pi/packages/coding-agent/src/tools/ask.ts`);
- * see docs/IMPLEMENTATION-PLAN.md for the full spec.
+ * see AGENTS.md for the architecture and development notes.
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { defineAskTool } from "./ask-tool.ts";

@@ -1,8 +1,7 @@
 # AGENTS.md — @gamaraan/ask-tool
 
-Guidance for future development of this repository. The authoritative spec is
-`docs/IMPLEMENTATION-PLAN.md` (research in `docs/ASK-TOOL.md` /
-`docs/BACKGROUND.md`); this file is the operating manual.
+Guidance for future development of this repository. This file is the operating
+manual.
 
 ## What this is
 
@@ -29,12 +28,11 @@ src/
     ask-dialog-component.ts  Path A: the rich TUI dialog (port of omp ask-dialog.ts)
     countdown.ts             deadline-based CountdownTimer with reset (port of omp's)
     chrome.ts                box-drawing helpers (port of omp overlay-box.ts)
-docs/                      research + implementation plan (the spec)
 ```text
 
 Tests live in **pi-mono** (not here) so they reuse its vitest alias graph:
-`pi-mono/packages/coding-agent/test/ask-user-question/`. This is a deliberate,
-spec-mandated arrangement (plan §4 D1): the only files this project adds to
+`pi-mono/packages/coding-agent/test/ask-user-question/`. This is a deliberate
+arrangement: the only files this project adds to
 pi-mono are those test files.
 
 ## Architecture invariants
@@ -70,7 +68,7 @@ pi-mono are those test files.
    timeout from a user Esc in the RPC path.
 7. **No omp-only features.** No TTS (`vocaliz*`/`speech.*`), no
    `TERMINAL.sendNotification`, no plan-mode carve-out, no collab bridging.
-   New code must not introduce them (the §12 audit greps for them).
+   New code must not introduce them (a grep audit enforces this).
 8. **Zero runtime dependencies.** Imports only `@earendil-works/pi-*`
    (peers, resolved by pi's extension loader) and the standard library.
    `Type` is imported from `@earendil-works/pi-ai` (it re-exports typebox's
@@ -84,7 +82,7 @@ pi-mono are those test files.
 ## Commands
 
 ```bash
-# Tests (78 cases across 7 files; plan floor is 51)
+# Tests (80 cases across 8 files)
 cd ../pi-mono/packages/coding-agent && npx vitest run test/ask-user-question
 
 # Full regression sweep in pi-mono (no new failures allowed)
@@ -103,7 +101,7 @@ npm pack --dry-run
 
 Note: the pi-mono pre-existing suite has 15 environmental failures (CLI tests
 spawning `src/cli.ts` on a node build without TS type-stripping) — unrelated
-to this package; the plan's §10.3 regression gate compares against that
+to this package; the regression gate compares against that
 baseline.
 
 ## Conventions
@@ -125,7 +123,7 @@ baseline.
 Any skill, AGENTS.md, or doc that instructs agents to use the retired
 interactive-question extension must be updated to name
 `@gamaraan/ask-tool` (tool name: `ask`). Zero live references to the old name
-may remain (plan §12 audit #9 greps `~/.pi/` and the package root).
+may remain (a grep audit over `~/.pi/` and the package root enforces this).
 
 ## Roadmap (follow-ups, separate PRs — do NOT fold into this package)
 
