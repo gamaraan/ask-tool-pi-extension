@@ -48,6 +48,13 @@ jobs:
         run: npm ci --ignore-scripts
         working-directory: pi-mono
 
+      - name: Generate pi-mono provider model data
+        # packages/ai/src/providers/data/*.json is gitignored build output
+        # imported by the provider *.models.ts sources (needed by both the
+        # typecheck and the test run); regenerated from embedded constants.
+        run: npm --prefix packages/ai run generate-models
+        working-directory: pi-mono
+
       - name: Typecheck
         run: npm run typecheck
         working-directory: ask-tool
