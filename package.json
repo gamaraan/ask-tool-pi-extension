@@ -10,18 +10,18 @@
 	"files": ["src", "README.md", "AGENTS.md", "LICENSE"],
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/gamaraan/ask-tool.git"
+		"url": "git+https://github.com/gamaraan/ask-tool-pi-extension.git"
 	},
-	"homepage": "https://github.com/gamaraan/ask-tool",
+	"homepage": "https://github.com/gamaraan/ask-tool-pi-extension",
 	"bugs": {
-		"url": "https://github.com/gamaraan/ask-tool/issues"
+		"url": "https://github.com/gamaraan/ask-tool-pi-extension/issues"
 	},
 	"engines": {
 		"node": ">=18"
 	},
 	"scripts": {
 		"test": "cd ../pi-mono/packages/coding-agent && npx vitest run test/ask-user-question",
-		"typecheck": "cd ../pi-mono && tsgo --noEmit -p ../ask-tool/tsconfig.json",
+		"typecheck": "cd ../pi-mono && ./node_modules/.bin/tsgo --noEmit -p ../ask-tool/tsconfig.json",
 		"verify:package": "npm pack --dry-run --json"
 	},
 	"publishConfig": {
