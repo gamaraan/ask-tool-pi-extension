@@ -101,7 +101,9 @@ const ASK_WIDGET_KEY = "ask";
  * the concrete TUI classes but not on the public `TUI` interface.
  */
 function focusedComponentOf(tui: TUI): Component | null {
-	return (tui as unknown as { getFocusedComponent(): Component | null }).getFocusedComponent();
+	return (
+		tui as unknown as { getFocusedComponent(): Component | null }
+	).getFocusedComponent();
 }
 
 async function executeRichDialog(
