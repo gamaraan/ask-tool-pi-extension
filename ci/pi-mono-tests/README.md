@@ -1,33 +1,25 @@
 # Vendored pi-mono unit tests (CI-only mirror)
 
-This directory is a **CI-only mirror** of the unit tests whose canonical home
-is the pi-mono monorepo:
+This directory contains the ask-tool unit tests that CI stages into a fresh
+pi-mono checkout as a temporary test host. The canonical test sources remain
+inside this repository; pi-mono must never receive committed feature or test
+changes.
 
-```text
-pi-mono/packages/coding-agent/test/ask-user-question/
-```
+The tests run inside the temporary pi-mono checkout because they reuse its
+vitest alias graph and `../pi-mono/node_modules` (typeRoots/tsconfig paths), and
+they import the ask-tool sources via the relative path
+`../../../../../ask-tool/src/…` after staging:
 
-The tests must run inside the pi-mono checkout because they reuse its vitest
-alias graph and `../pi-mono/node_modules` (typeRoots/tsconfig paths), and they
-import the ask-tool sources via the relative path `../../../../../ask-tool/src/…`.
-
-`ci/pi-mono-tests/` exists solely so CI can stage the tests into the pi-mono
-checkout before running them (they are not committed to pi-mono main yet):
+`ci/pi-mono-tests/` exists solely so CI can stage the tests into the temporary
+pi-mono checkout before running them:
 
 ```bash
 mkdir -p pi-mono/packages/coding-agent/test/ask-user-question
 cp -r ci/pi-mono-tests/. pi-mono/packages/coding-agent/test/ask-user-question/
 ```
 
-## Syncing
+## Running locally
 
-Keep this mirror byte-identical to the pi-mono test directory. After editing
-tests in pi-mono, re-copy them here:
-
-```bash
-cp -r ../pi-mono/packages/coding-agent/test/ask-user-question/. ci/pi-mono-tests/
-```
-
-**Delete this directory once the tests are committed to pi-mono main** — the
-CI `test`/`publish` workflows then stage from the pi-mono checkout instead of
-this mirror.
+The repository's test script stages these files into a sibling pi-mono checkout
+before invoking Vitest. CI does the same in a fresh checkout. Do not edit or
+commit files under the pi-mono repository; edit this mirror instead.

@@ -5,16 +5,23 @@
  * @gamaraan/ask-tool entry, runs pi's `discoverAndLoadExtensions`, and
  * asserts the `ask` tool and its flags are registered with no load errors.
  */
+// pi-lens-ignore: typescript:2307
 import * as fs from "node:fs";
+// pi-lens-ignore: typescript:2307
 import * as os from "node:os";
+// pi-lens-ignore: typescript:2307
 import * as path from "node:path";
+// pi-lens-ignore: typescript:2307
 import { fileURLToPath } from "node:url";
+// pi-lens-ignore: typescript:2307
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+// pi-lens-ignore: typescript:2307
 import { discoverAndLoadExtensions } from "../../src/core/extensions/loader.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // test/ask-user-question → pi-mono root → ask-tool/src/index.ts
 const packageEntry = path.resolve(__dirname, "../../../../../ask-tool/src/index.ts");
+const packageManifest = path.resolve(__dirname, "../../../../../ask-tool/package.json");
 
 describe("ask-tool extension discovery", () => {
 	let tempDir: string;
@@ -43,6 +50,19 @@ describe("ask-tool extension discovery", () => {
 		expect(extension.tools.has("ask")).toBe(true);
 		expect(extension.flags.has("ask-timeout")).toBe(true);
 		expect(extension.flags.has("ask-notify")).toBe(true);
+	});
+
+	it("pins the 0.2.0 manifest without a desktop-notify dependency", () => {
+		const manifest = JSON.parse(fs.readFileSync(packageManifest, "utf8")) as {
+			version?: string;
+			dependencies?: Record<string, unknown>;
+			devDependencies?: Record<string, unknown>;
+			peerDependencies?: Record<string, unknown>;
+		};
+		expect(manifest.version).toBe("0.2.0");
+		for (const dependencies of [manifest.dependencies, manifest.devDependencies, manifest.peerDependencies]) {
+			expect(dependencies ?? {}).not.toHaveProperty("@gamaraan/desktop-notify");
+		}
 	});
 
 	it("registers the sequential ask tool with the ported description", async () => {

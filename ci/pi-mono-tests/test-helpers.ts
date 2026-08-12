@@ -5,8 +5,11 @@
  */
 // pi-lens-ignore: typescript:2307
 import type { ExtensionAPI, ExtensionContext, Theme } from "@earendil-works/pi-coding-agent";
+// pi-lens-ignore: typescript:2307
 import type { TUI } from "@earendil-works/pi-tui";
+// pi-lens-ignore: typescript:2307
 import { vi } from "vitest";
+// pi-lens-ignore: typescript:2307
 import type { AskToolInput } from "../../../../../ask-tool/src/types.ts";
 
 /** Theme whose style functions pass text through unchanged (ANSI-free snapshots). */
@@ -91,6 +94,10 @@ export interface ToolHarness {
 		label?: string;
 	};
 	flags: Map<string, { type: string; default?: boolean | string }>;
+	events: {
+		emit: ReturnType<typeof vi.fn>;
+		on: ReturnType<typeof vi.fn>;
+	};
 	getFlag(name: string): boolean | string | undefined;
 }
 
@@ -107,8 +114,10 @@ export function setupHarness(
 ): ToolHarness {
 	const flags = new Map<string, { type: string; default?: boolean | string }>();
 	const flagValues = new Map(Object.entries(options.flags ?? {}));
+	const events = { emit: vi.fn(), on: vi.fn(() => () => undefined) };
 	const harness: ToolHarness = {
 		flags,
+		events,
 		getFlag(name: string): boolean | string | undefined {
 			return flagValues.has(name) ? flagValues.get(name) : undefined;
 		},
@@ -126,6 +135,7 @@ export function setupHarness(
 			registered.tool = tool;
 		}),
 		getFlag: harness.getFlag,
+		events,
 	} as unknown as ExtensionAPI;
 
 	(options.register ?? ((api) => void api))(api);

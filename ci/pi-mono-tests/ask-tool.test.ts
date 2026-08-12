@@ -5,11 +5,15 @@
 
 // pi-lens-ignore: typescript:2307
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+// pi-lens-ignore: typescript:2307
 import { beforeEach, describe, expect, it, vi } from "vitest";
+// pi-lens-ignore: typescript:2307
 import { OTHER_OPTION } from "../../../../../ask-tool/src/constants.ts";
+// pi-lens-ignore: typescript:2307
 import { ASK_TOOL_DESCRIPTION } from "../../../../../ask-tool/src/description.ts";
+// pi-lens-ignore: typescript:2307
 import askToolExtension from "../../../../../ask-tool/src/index.ts";
-import { fakeTheme, focusTrackingTui, setupHarness, singleQuestionParams } from "./test-helpers.ts";
+import { fakeTheme, fakeTui, focusTrackingTui, setupHarness, singleQuestionParams } from "./test-helpers.ts";
 
 describe("ask tool extension", () => {
 	beforeEach(() => {
@@ -70,9 +74,10 @@ describe("ask tool extension", () => {
 
 	it("Path A: widget dialog drives the callbacks and returns the mapped result", async () => {
 		let widgetCleared = false;
-		const { tool, ctx } = setupHarness({
+		const { tool, ctx, events } = setupHarness({
 			mode: "tui",
 			hasUI: true,
+			flags: { "ask-notify": "on" },
 			register: (pi) => askToolExtension(pi),
 			ui: {
 				setWidget: (async (_key: unknown, content: unknown) => {
@@ -104,6 +109,15 @@ describe("ask tool extension", () => {
 		};
 		expect(result.content[0]?.text).toBe("User selected: SQLite");
 		expect(result.details.selectedOptions).toEqual(["SQLite"]);
+		expect(ctx.ui.notify).toHaveBeenCalledWith("Ask tool is waiting for input", "info");
+		expect(events.emit).toHaveBeenCalledOnce();
+		expect(events.emit).toHaveBeenCalledWith("desktop-notify:request", {
+			title: "Ask",
+			body: "Waiting for input",
+			type: "ask",
+			urgency: "normal",
+			sound: "question",
+		});
 	});
 
 	it("flag wins over env for the timeout", async () => {
@@ -196,6 +210,7 @@ describe("ask tool extension", () => {
 		});
 		await first.tool.execute("id", singleQuestionParams(), undefined, undefined, first.ctx);
 		expect(first.ctx.ui.notify).toHaveBeenCalledWith("Ask tool is waiting for input", "info");
+		expect(first.events.emit).not.toHaveBeenCalled();
 
 		const second = setupHarness({
 			mode: "rpc",
@@ -205,6 +220,39 @@ describe("ask tool extension", () => {
 		});
 		await second.tool.execute("id", singleQuestionParams(), undefined, undefined, second.ctx);
 		expect(second.ctx.ui.notify).not.toHaveBeenCalled();
+		expect(second.events.emit).not.toHaveBeenCalled();
+	});
+
+	it("does not request desktop notifications for disabled TUI or headless asks", async () => {
+		const tui = setupHarness({
+			mode: "tui",
+			hasUI: true,
+			flags: { "ask-notify": "off" },
+			register: (pi) => askToolExtension(pi),
+			ui: {
+				setWidget: (async (_key: unknown, content: unknown) => {
+					if (content === undefined) return;
+					const factory = content as (tui: unknown, theme: unknown) => unknown;
+					const component = (await factory(fakeTui(), fakeTheme())) as {
+						handleInput(data: string): void;
+					};
+					component.handleInput("\r");
+				}) as never,
+			},
+		});
+		await tui.tool.execute("id", singleQuestionParams(), undefined, undefined, tui.ctx);
+		expect(tui.ctx.ui.notify).not.toHaveBeenCalled();
+		expect(tui.events.emit).not.toHaveBeenCalled();
+
+		const headless = setupHarness({
+			mode: "print",
+			hasUI: false,
+			flags: { "ask-notify": "on" },
+			register: (pi) => askToolExtension(pi),
+		});
+		await headless.tool.execute("id", singleQuestionParams(), undefined, undefined, headless.ctx);
+		expect(headless.ctx.ui.notify).not.toHaveBeenCalled();
+		expect(headless.events.emit).not.toHaveBeenCalled();
 	});
 
 	it("prepareArguments rejects reserved labels and invalid payloads", async () => {

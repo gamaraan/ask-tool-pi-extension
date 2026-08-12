@@ -1,10 +1,8 @@
 name: test
 
-# Runs the unit test suite on every push to a branch that has a PR open
-# against main. The tests live in the pi-mono monorepo (they reuse its vitest
-# alias graph and node_modules), so this workflow checks pi-mono out as a
-# sibling of this repo and stages the vendored test mirror
-# (ci/pi-mono-tests/, see its README) into the pi-mono checkout first.
+# Runs the unit test suite on every pull request against main. The tests are
+# maintained in this repository and run against a temporary pi-mono checkout
+# because they reuse pi-mono's vitest alias graph and node_modules.
 on:
   pull_request:
     branches:
@@ -27,20 +25,14 @@ jobs:
           path: ask-tool
           persist-credentials: false
 
-      # pi-mono is the test host: the ask-tool tsconfig paths and the vitest
-      # alias graph both resolve into it, and the tests import the ask-tool
-      # sources as a sibling via ../../../../../ask-tool/src/...
-      - name: Checkout pi-mono (test host)
+      # pi-mono is a read-only temporary test host: the ask-tool tsconfig paths
+      # and vitest alias graph resolve into it.
+      - name: Checkout pi-mono (temporary test host)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: earendil-works/pi-mono
           path: pi-mono
           persist-credentials: false
-
-      - name: Stage vendored unit tests into pi-mono
-        run: |
-          mkdir -p pi-mono/packages/coding-agent/test/ask-user-question
-          cp -r ask-tool/ci/pi-mono-tests/. pi-mono/packages/coding-agent/test/ask-user-question/
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0

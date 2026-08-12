@@ -30,10 +30,10 @@ src/
     chrome.ts                box-drawing helpers (port of omp overlay-box.ts)
 ```text
 
-Tests live in **pi-mono** (not here) so they reuse its vitest alias graph:
-`pi-mono/packages/coding-agent/test/ask-user-question/`. This is a deliberate
-arrangement: the only files this project adds to
-pi-mono are those test files.
+Tests live in `ci/pi-mono-tests/` inside this repository. The test runner stages
+that directory into a temporary sibling pi-mono checkout because it reuses
+pi-mono's Vitest alias graph; pi-mono itself is a read-only test host and must
+never receive committed feature or test changes.
 
 ## Architecture invariants
 
@@ -49,8 +49,8 @@ pi-mono are those test files.
    `pi-mono/packages/*/src/`. In particular: no `ExtensionUIContext.select`
    upgrades, no `askDialog`/`editor` members, no settings accessor, no
    plan-mode signal. Those are follow-ups (see Roadmap) in separate PRs.
-   The only pi-mono additions allowed are test files under
-   `packages/coding-agent/test/`.
+   CI may temporarily stage tests into a fresh pi-mono checkout, but no
+   pi-mono repository changes are part of this project.
 3. **`executionMode: "sequential"`** — the pi analogue of omp's
    `concurrency = "exclusive"`. The dialog is a single shared UI surface.
 4. **Esc cancels ⇒ `ctx.abort()` + cancelled result text** (no throw; pi's
@@ -82,18 +82,14 @@ pi-mono are those test files.
 ## Commands
 
 ```bash
-# Tests (80 cases across 8 files)
-cd ../pi-mono/packages/coding-agent && npx vitest run test/ask-user-question
+# Tests (stages ci/pi-mono-tests into a temporary pi-mono host)
+npm test
 
-# Full regression sweep in pi-mono (no new failures allowed)
-cd ../pi-mono/packages/coding-agent && npx vitest run
+# Typecheck the package against the pi-mono dependency sources
+npm run typecheck
 
-# Typecheck the package + the pi-mono graph
-cd ../pi-mono && ./node_modules/.bin/tsgo --noEmit
-cd ../pi-mono && ./node_modules/.bin/tsgo --noEmit -p ../ask-tool/tsconfig.json
-
-# Lint (monorepo biome covers the test files)
-cd ../pi-mono && npx biome check packages/coding-agent/test/ask-user-question/
+# Lint (the temporary pi-mono host's biome covers the staged tests)
+npm run lint:test
 
 # Package inspection
 npm pack --dry-run
@@ -113,8 +109,9 @@ baseline.
   user-visible contract matters (response text is golden-tested in
   `format.test.ts`). Divergences from omp are deliberate and must be
   documented in the README (feature matrix) and pinned by a test.
-- Test files: `test/ask-user-question/` in pi-mono; imports use the
-  `../../../../../ask-tool/src/...` relative path (5 levels up).
+- Test files: `ci/pi-mono-tests/` in this repository; CI stages them into a
+  temporary pi-mono host. Imports use the `../../../../../ask-tool/src/...`
+  relative path after staging.
 - Mock style: `test-helpers.ts` provides `fakeTheme` (ANSI-free passthrough),
   `fakeTui`, `setupHarness` (mock API + ctx), and pi key sequences (`keys`).
 

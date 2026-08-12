@@ -3,8 +3,8 @@ name: publish
 # Publishes @gamaraan/ask-tool to npm when a v* tag is pushed. The verify job
 # re-runs the full gate (typecheck, unit tests, package contents, tag
 # invariants) and the publish job releases with npm provenance (id-token).
-# Unit tests require the pi-mono sibling checkout + the vendored test mirror,
-# same layout as .github/workflows/test.yml.
+# Unit tests use a temporary pi-mono sibling checkout only as their dependency
+# and Vitest host; all test sources remain in this repository.
 on:
   push:
     tags:
@@ -24,17 +24,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Checkout pi-mono (test host)
+      - name: Checkout pi-mono (temporary test host)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: earendil-works/pi-mono
           path: pi-mono
           persist-credentials: false
-
-      - name: Stage vendored unit tests into pi-mono
-        run: |
-          mkdir -p pi-mono/packages/coding-agent/test/ask-user-question
-          cp -r ask-tool/ci/pi-mono-tests/. pi-mono/packages/coding-agent/test/ask-user-question/
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
