@@ -79,6 +79,12 @@ Every other mode with UI (RPC) uses the simple per-question loop; headless
 modes return an `Error: Ask tool requires interactive mode` result without
 throwing.
 
+When `ask-notify` is on, the existing in-UI waiting notice is retained. For TUI
+asks, ask-tool also emits a best-effort `desktop-notify:request` EventBus event
+with the waiting notification payload. `@gamaraan/desktop-notify` is optional:
+when it is loaded it may handle the request, and when it is unavailable no
+action is required.
+
 ## Configuration
 
 pi extensions have no settings accessor, so configuration rides on CLI flags

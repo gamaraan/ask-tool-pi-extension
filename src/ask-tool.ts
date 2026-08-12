@@ -71,6 +71,15 @@ export function defineAskTool(
 
 			if (config.notify) {
 				ctx.ui.notify("Ask tool is waiting for input", "info");
+				if (ctx.mode === "tui") {
+					pi.events.emit("desktop-notify:request", {
+						title: "Ask",
+						body: "Waiting for input",
+						type: "ask",
+						urgency: "normal",
+						sound: "question",
+					});
+				}
 			}
 
 			if (ctx.mode === "tui") {
