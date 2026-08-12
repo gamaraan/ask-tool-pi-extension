@@ -43,8 +43,9 @@ pi-mono are those test files.
    `ExtensionContext`:
    - `!ctx.hasUI` → error result `"Error: Ask tool requires interactive mode"`,
      never throws, never opens a dialog (Path C).
-   - `ctx.mode === "tui"` → `ctx.ui.custom(...)` with `AskDialogComponent`
-     (Path A).
+   - `ctx.mode === "tui"` → rich dialog presented as a widget panel above
+     the prompt editor (`ctx.ui.setWidget` + focus grab/restore; the widget
+     is cleared on completion) — Path A.
    - everything else with UI → `askQuestionsViaSimpleRpc` (Path B).
 2. **No core pi changes — ever.** Do NOT modify files under
    `pi-mono/packages/*/src/`. In particular: no `ExtensionUIContext.select`

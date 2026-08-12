@@ -14,7 +14,7 @@ import type {
 	Theme,
 	ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
-import type { Component } from "@earendil-works/pi-tui";
+import type { Component, TUI } from "@earendil-works/pi-tui";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import { resolveAskConfig } from "./config.ts";
 import { ASK_TOOL_DESCRIPTION } from "./description.ts";
@@ -93,9 +93,16 @@ export function defineAskTool(
 	};
 }
 
-type RichDialogOutcome =
-	| { kind: "answered"; result: AskDialogSubmitResult }
-	| { kind: "cancelled" };
+/** Widget key under which the ask dialog is mounted (TUI Path A). */
+const ASK_WIDGET_KEY = "ask";
+
+/**
+ * The currently focused component of a TUI. `getFocusedComponent` exists on
+ * the concrete TUI classes but not on the public `TUI` interface.
+ */
+function focusedComponentOf(tui: TUI): Component | null {
+	return (tui as unknown as { getFocusedComponent(): Component | null }).getFocusedComponent();
+}
 
 async function executeRichDialog(
 	ctx: ExtensionContext,
@@ -120,45 +127,59 @@ async function executeRichDialog(
 			: {}),
 	}));
 
-	let outcome: RichDialogOutcome | undefined;
-	await ctx.ui.custom<AskDialogSubmitResult | null>(
-		(tui, theme, _keybindings, done) => {
-			const onAbort = () => done(null);
-			signal?.addEventListener("abort", onAbort, { once: true });
-			const cleanup = () => signal?.removeEventListener("abort", onAbort);
-			const component = new AskDialogComponent(
-				questions,
-				{
-					onSubmit: (submit) => {
-						cleanup();
-						outcome = { kind: "answered", result: submit };
-						done(submit);
+	// The dialog is presented in the extension widget slot (above the prompt
+	// editor, below the transcript) instead of a screen-covering overlay: the
+	// conversation stays visible while the user answers. The widget factory
+	// grabs keyboard focus for the dialog (widgets are passive by default) and
+	// restores it to whatever was focused before on completion.
+	const result = await new Promise<AskDialogSubmitResult | null>((resolve) => {
+		ctx.ui.setWidget(
+			ASK_WIDGET_KEY,
+			(tui, theme) => {
+				const previousFocus = focusedComponentOf(tui);
+				let settled = false;
+				const onAbort = (): void => {
+					cleanup();
+					resolve(null);
+				};
+				const cleanup = (): void => {
+					if (settled) return;
+					settled = true;
+					signal?.removeEventListener("abort", onAbort);
+					ctx.ui.setWidget(ASK_WIDGET_KEY, undefined);
+					if (previousFocus) tui.setFocus(previousFocus);
+				};
+				signal?.addEventListener("abort", onAbort, { once: true });
+				const component = new AskDialogComponent(
+					questions,
+					{
+						onSubmit: (submit) => {
+							cleanup();
+							resolve(submit);
+						},
+						onCancel: () => {
+							cleanup();
+							resolve(null);
+						},
 					},
-					onCancel: () => {
-						cleanup();
-						outcome = { kind: "cancelled" };
-						done(null);
+					{
+						timeout: timeoutMs > 0 ? timeoutMs : undefined,
+						tui,
+						theme,
 					},
-				},
-				{
-					timeout: timeoutMs > 0 ? timeoutMs : undefined,
-					tui,
-					theme,
-				},
-			);
-			return component;
-		},
-		{
-			overlay: true,
-			overlayOptions: { width: "80%", maxHeight: "75%" },
-		},
-	);
-	if (outcome === undefined || outcome.kind === "cancelled") {
+				);
+				tui.setFocus(component);
+				return component;
+			},
+			{ placement: "aboveEditor" },
+		);
+	});
+	if (result === null) {
 		ctx.abort();
 		return cancelledResult();
 	}
 
-	const richResult = outcome.result;
+	const richResult = result;
 	if (richResult.kind === "chat") {
 		const questionText = params.questions
 			.map((question) => question.question)

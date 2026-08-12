@@ -72,9 +72,13 @@ Gives the model a tool named **`ask`** that takes one or more questions:
 | Esc cancels the ask and aborts the turn | ✅ | ✅ | — |
 | Error result instead of a dialog | — | — | ✅ |
 
-`ctx.mode === "tui"` uses the rich dialog (`ctx.ui.custom`); every other mode
-with UI (RPC) uses the simple per-question loop; headless modes return an
-`Error: Ask tool requires interactive mode` result without throwing.
+`ctx.mode === "tui"` shows the rich dialog as a **widget panel in the extension
+widget slot** — directly under the transcript, above the prompt editor — via
+`ctx.ui.setWidget` (the dialog grabs keyboard focus while open and restores it
+to the prompt afterwards, and is cleared when the answers are submitted).
+Every other mode with UI (RPC) uses the simple per-question loop; headless
+modes return an `Error: Ask tool requires interactive mode` result without
+throwing.
 
 ## Configuration
 
