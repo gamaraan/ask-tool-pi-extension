@@ -1,0 +1,105 @@
+name: publish
+
+# Publishes @gamaraan/ask-tool to npm when a v* tag is pushed. The verify job
+# re-runs the full gate (typecheck, unit tests, package contents, tag
+# invariants) and the publish job releases with npm provenance (id-token).
+# Unit tests require the pi-mono sibling checkout + the vendored test mirror,
+# same layout as .github/workflows/test.yml.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ask-tool
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: ask-tool
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Checkout pi-mono (test host)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: earendil-works/pi-mono
+          path: pi-mono
+          persist-credentials: false
+
+      - name: Stage vendored unit tests into pi-mono
+        run: |
+          mkdir -p pi-mono/packages/coding-agent/test/ask-user-question
+          cp -r ask-tool/ci/pi-mono-tests/. pi-mono/packages/coding-agent/test/ask-user-question/
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          # setup-node v5+ auto-caches npm by default; disable it (see
+          # zizmor cache-poisoning audit) - the verify job must be hermetic.
+          package-manager-cache: false
+
+      - name: Install pi-mono dependencies
+        run: npm ci --ignore-scripts
+        working-directory: pi-mono
+
+      - name: Typecheck
+        run: npm run typecheck
+        working-directory: ask-tool
+
+      - name: Run unit tests
+        run: npm test
+        working-directory: ask-tool
+
+      - name: Verify package contents
+        run: npm run verify:package
+        working-directory: ask-tool
+
+      - name: Verify tag matches package version
+        working-directory: ask-tool
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$GITHUB_REF_NAME" != "v$PKG_VERSION" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package version v$PKG_VERSION" >&2
+            exit 1
+          fi
+
+      - name: Verify tag is on the protected default branch
+        working-directory: ask-tool
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_REF_NAME" origin/main; then
+            echo "Tag $GITHUB_REF_NAME is not reachable from origin/main" >&2
+            exit 1
+          fi
+
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # for npm provenance
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          # setup-node v5+ auto-caches npm by default; disable it (see
+          # zizmor cache-poisoning audit) - the verify job must be hermetic.
+          package-manager-cache: false
+          registry-url: https://registry.npmjs.org/
+
+      - name: Publish to npm
+        run: npm publish --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+          NPM_CONFIG_CACHE: ${{ runner.temp }}/npm-cache
