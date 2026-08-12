@@ -30,10 +30,10 @@ src/
     chrome.ts                box-drawing helpers (port of omp overlay-box.ts)
 ```text
 
-Tests live in `ci/pi-mono-tests/` inside this repository. The test runner stages
-that directory into a temporary sibling pi-mono checkout because it reuses
-pi-mono's Vitest alias graph; pi-mono itself is a read-only test host and must
-never receive committed feature or test changes.
+Tests live in `ci/pi-mono-tests/` inside this repository. They run from this
+repository using pi-mono's installed Vitest package and source tree as a
+read-only test host; pi-mono itself must never receive committed feature or
+test changes.
 
 ## Architecture invariants
 
@@ -82,13 +82,13 @@ never receive committed feature or test changes.
 ## Commands
 
 ```bash
-# Tests (stages ci/pi-mono-tests into a temporary pi-mono host)
+# Tests (run from ask-tool; pi-mono is read-only dependency source)
 npm test
 
-# Typecheck the package against the pi-mono dependency sources
+# Typecheck the package against pi-mono dependency sources
 npm run typecheck
 
-# Lint (the temporary pi-mono host's biome covers the staged tests)
+# Lint the repository-owned tests
 npm run lint:test
 
 # Package inspection
@@ -109,9 +109,8 @@ baseline.
   user-visible contract matters (response text is golden-tested in
   `format.test.ts`). Divergences from omp are deliberate and must be
   documented in the README (feature matrix) and pinned by a test.
-- Test files: `ci/pi-mono-tests/` in this repository; CI stages them into a
-  temporary pi-mono host. Imports use the `../../../../../ask-tool/src/...`
-  relative path after staging.
+- Test files: `ci/pi-mono-tests/` in this repository. Ask-tool imports use
+  `../../src/...`; pi-mono imports are read-only test-host references.
 - Mock style: `test-helpers.ts` provides `fakeTheme` (ANSI-free passthrough),
   `fakeTui`, `setupHarness` (mock API + ctx), and pi key sequences (`keys`).
 

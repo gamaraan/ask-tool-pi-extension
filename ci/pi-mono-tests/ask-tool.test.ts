@@ -8,12 +8,18 @@ import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 // pi-lens-ignore: typescript:2307
 import { beforeEach, describe, expect, it, vi } from "vitest";
 // pi-lens-ignore: typescript:2307
-import { OTHER_OPTION } from "../../../../../ask-tool/src/constants.ts";
+import { OTHER_OPTION } from "../../src/constants.ts";
 // pi-lens-ignore: typescript:2307
-import { ASK_TOOL_DESCRIPTION } from "../../../../../ask-tool/src/description.ts";
+import { ASK_TOOL_DESCRIPTION } from "../../src/description.ts";
 // pi-lens-ignore: typescript:2307
-import askToolExtension from "../../../../../ask-tool/src/index.ts";
-import { fakeTheme, fakeTui, focusTrackingTui, setupHarness, singleQuestionParams } from "./test-helpers.ts";
+import askToolExtension from "../../src/index.ts";
+import {
+	fakeTheme,
+	fakeTui,
+	focusTrackingTui,
+	setupHarness,
+	singleQuestionParams,
+} from "./test-helpers.ts";
 
 describe("ask tool extension", () => {
 	beforeEach(() => {
@@ -21,7 +27,9 @@ describe("ask tool extension", () => {
 	});
 
 	it("registers the tool with executionMode sequential", () => {
-		const { tool, api, flags } = setupHarness({ register: (pi) => askToolExtension(pi) });
+		const { tool, api, flags } = setupHarness({
+			register: (pi) => askToolExtension(pi),
+		});
 		expect(api.registerTool).toHaveBeenCalledOnce();
 		expect(tool.executionMode).toBe("sequential");
 		expect(tool.name).toBe("ask");
@@ -37,9 +45,20 @@ describe("ask tool extension", () => {
 	});
 
 	it("Path C: returns an error result in headless mode without throwing", async () => {
-		const { tool, ctx } = setupHarness({ mode: "print", hasUI: false, register: (pi) => askToolExtension(pi) });
-		const result = await tool.execute("id", singleQuestionParams(), undefined, undefined, ctx);
-		const text = (result as { content: Array<{ text?: string }> }).content[0]?.text ?? "";
+		const { tool, ctx } = setupHarness({
+			mode: "print",
+			hasUI: false,
+			register: (pi) => askToolExtension(pi),
+		});
+		const result = await tool.execute(
+			"id",
+			singleQuestionParams(),
+			undefined,
+			undefined,
+			ctx,
+		);
+		const text =
+			(result as { content: Array<{ text?: string }> }).content[0]?.text ?? "";
 		expect(text).toContain("Ask tool requires interactive mode");
 	});
 
@@ -50,7 +69,13 @@ describe("ask tool extension", () => {
 			register: (pi) => askToolExtension(pi),
 			ui: { select: vi.fn(async () => "PostgreSQL") },
 		});
-		const result = (await tool.execute("id", singleQuestionParams(), undefined, undefined, ctx)) as {
+		const result = (await tool.execute(
+			"id",
+			singleQuestionParams(),
+			undefined,
+			undefined,
+			ctx,
+		)) as {
 			content: Array<{ text?: string }>;
 			details: { question?: string; selectedOptions?: string[] };
 		};
@@ -65,7 +90,13 @@ describe("ask tool extension", () => {
 			register: (pi) => askToolExtension(pi),
 			ui: { select: vi.fn(async () => undefined) },
 		});
-		const result = (await tool.execute("id", singleQuestionParams(), undefined, undefined, ctx)) as {
+		const result = (await tool.execute(
+			"id",
+			singleQuestionParams(),
+			undefined,
+			undefined,
+			ctx,
+		)) as {
 			content: Array<{ text?: string }>;
 		};
 		expect(ctx.abort).toHaveBeenCalled();
@@ -103,13 +134,22 @@ describe("ask tool extension", () => {
 				}) as never,
 			},
 		});
-		const result = (await tool.execute("id", singleQuestionParams(), undefined, undefined, ctx)) as {
+		const result = (await tool.execute(
+			"id",
+			singleQuestionParams(),
+			undefined,
+			undefined,
+			ctx,
+		)) as {
 			content: Array<{ text?: string }>;
 			details: { selectedOptions?: string[] };
 		};
 		expect(result.content[0]?.text).toBe("User selected: SQLite");
 		expect(result.details.selectedOptions).toEqual(["SQLite"]);
-		expect(ctx.ui.notify).toHaveBeenCalledWith("Ask tool is waiting for input", "info");
+		expect(ctx.ui.notify).toHaveBeenCalledWith(
+			"Ask tool is waiting for input",
+			"info",
+		);
 		expect(events.emit).toHaveBeenCalledOnce();
 		expect(events.emit).toHaveBeenCalledWith("desktop-notify:request", {
 			title: "Ask",
@@ -172,12 +212,20 @@ describe("ask tool extension", () => {
 				editor: vi.fn(async () => "Custom storage"),
 			},
 		});
-		const result = (await tool.execute("id", singleQuestionParams(), undefined, undefined, ctx)) as {
+		const result = (await tool.execute(
+			"id",
+			singleQuestionParams(),
+			undefined,
+			undefined,
+			ctx,
+		)) as {
 			content: Array<{ text?: string }>;
 			details: { customInput?: string };
 		};
 		expect(ctx.ui.editor).toHaveBeenCalled();
-		expect(result.content[0]?.text).toBe("User provided custom input: Custom storage");
+		expect(result.content[0]?.text).toBe(
+			"User provided custom input: Custom storage",
+		);
 		expect(result.details.customInput).toBe("Custom storage");
 	});
 
@@ -188,10 +236,18 @@ describe("ask tool extension", () => {
 			flags: { "ask-timeout": "1" },
 			register: (pi) => askToolExtension(pi),
 			ui: {
-				select: vi.fn<ExtensionContext["ui"]["select"]>(() => new Promise(() => {})),
+				select: vi.fn<ExtensionContext["ui"]["select"]>(
+					() => new Promise(() => {}),
+				),
 			},
 		});
-		const result = (await tool.execute("id", singleQuestionParams(), undefined, undefined, ctx)) as {
+		const result = (await tool.execute(
+			"id",
+			singleQuestionParams(),
+			undefined,
+			undefined,
+			ctx,
+		)) as {
 			content: Array<{ text?: string }>;
 			details: { selectedOptions?: string[]; timedOut?: boolean };
 		};
@@ -208,8 +264,17 @@ describe("ask tool extension", () => {
 			register: (pi) => askToolExtension(pi),
 			ui: { select: vi.fn(async () => "SQLite") },
 		});
-		await first.tool.execute("id", singleQuestionParams(), undefined, undefined, first.ctx);
-		expect(first.ctx.ui.notify).toHaveBeenCalledWith("Ask tool is waiting for input", "info");
+		await first.tool.execute(
+			"id",
+			singleQuestionParams(),
+			undefined,
+			undefined,
+			first.ctx,
+		);
+		expect(first.ctx.ui.notify).toHaveBeenCalledWith(
+			"Ask tool is waiting for input",
+			"info",
+		);
 		expect(first.events.emit).not.toHaveBeenCalled();
 
 		const second = setupHarness({
@@ -218,7 +283,13 @@ describe("ask tool extension", () => {
 			register: (pi) => askToolExtension(pi),
 			ui: { select: vi.fn(async () => "SQLite") },
 		});
-		await second.tool.execute("id", singleQuestionParams(), undefined, undefined, second.ctx);
+		await second.tool.execute(
+			"id",
+			singleQuestionParams(),
+			undefined,
+			undefined,
+			second.ctx,
+		);
 		expect(second.ctx.ui.notify).not.toHaveBeenCalled();
 		expect(second.events.emit).not.toHaveBeenCalled();
 	});
@@ -240,7 +311,13 @@ describe("ask tool extension", () => {
 				}) as never,
 			},
 		});
-		await tui.tool.execute("id", singleQuestionParams(), undefined, undefined, tui.ctx);
+		await tui.tool.execute(
+			"id",
+			singleQuestionParams(),
+			undefined,
+			undefined,
+			tui.ctx,
+		);
 		expect(tui.ctx.ui.notify).not.toHaveBeenCalled();
 		expect(tui.events.emit).not.toHaveBeenCalled();
 
@@ -250,7 +327,13 @@ describe("ask tool extension", () => {
 			flags: { "ask-notify": "on" },
 			register: (pi) => askToolExtension(pi),
 		});
-		await headless.tool.execute("id", singleQuestionParams(), undefined, undefined, headless.ctx);
+		await headless.tool.execute(
+			"id",
+			singleQuestionParams(),
+			undefined,
+			undefined,
+			headless.ctx,
+		);
 		expect(headless.ctx.ui.notify).not.toHaveBeenCalled();
 		expect(headless.events.emit).not.toHaveBeenCalled();
 	});
@@ -260,7 +343,9 @@ describe("ask tool extension", () => {
 		expect(() => tool.prepareArguments?.({ questions: [] })).toThrow();
 		expect(() =>
 			tool.prepareArguments?.({
-				questions: [{ id: "q", question: "Q?", options: [{ label: OTHER_OPTION }] }],
+				questions: [
+					{ id: "q", question: "Q?", options: [{ label: OTHER_OPTION }] },
+				],
 			}),
 		).toThrow(/reserved/);
 		const parsed = tool.prepareArguments?.(singleQuestionParams());
@@ -274,7 +359,11 @@ describe("ask tool extension", () => {
 			hasUI: true,
 			flags: { "ask-timeout": "1" },
 			register: (pi) => askToolExtension(pi),
-			ui: { select: vi.fn<ExtensionContext["ui"]["select"]>(() => new Promise(() => {})) },
+			ui: {
+				select: vi.fn<ExtensionContext["ui"]["select"]>(
+					() => new Promise(() => {}),
+				),
+			},
 		});
 		await tool.execute("id", singleQuestionParams(), undefined, undefined, ctx);
 		expect(Date.now() - started).toBeGreaterThanOrEqual(900);

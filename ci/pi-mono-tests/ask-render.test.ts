@@ -1,9 +1,10 @@
 /**
  * renderCall / renderResult snapshot tests (plan T9 / §9.2: ≥5 cases).
  */
+// pi-lens-ignore: typescript:2307
 import { describe, expect, it } from "vitest";
-import askToolExtension from "../../../../../ask-tool/src/index.ts";
-import type { AskToolDetails } from "../../../../../ask-tool/src/types.ts";
+import askToolExtension from "../../src/index.ts";
+import type { AskToolDetails } from "../../src/types.ts";
 import { fakeTheme, setupHarness } from "./test-helpers.ts";
 
 function tool() {
@@ -11,7 +12,10 @@ function tool() {
 	return tool;
 }
 
-function render(component: { render(width: number): string[] } | undefined, width = 80): string {
+function render(
+	component: { render(width: number): string[] } | undefined,
+	width = 80,
+): string {
 	if (!component) return "";
 	return component.render(width).join("\n");
 }
@@ -25,7 +29,10 @@ describe("ask renderers", () => {
 						{
 							id: "storage",
 							question: "Which storage backend?",
-							options: [{ label: "SQLite", description: "File-based." }, { label: "PostgreSQL" }],
+							options: [
+								{ label: "SQLite", description: "File-based." },
+								{ label: "PostgreSQL" },
+							],
 						},
 					],
 				},
@@ -40,7 +47,9 @@ describe("ask renderers", () => {
 	});
 
 	it("renderCall normalizes model-mangled args without crashing", () => {
-		const out = render(tool().renderCall?.({ questions: '{"bad": true}' } as never, fakeTheme()));
+		const out = render(
+			tool().renderCall?.({ questions: '{"bad": true}' } as never, fakeTheme()),
+		);
 		// Falls back to the no-question error frame instead of throwing.
 		expect(out).toContain("Ask");
 	});
@@ -74,7 +83,15 @@ describe("ask renderers", () => {
 		};
 		const out = render(
 			tool().renderResult?.(
-				{ content: [{ type: "text", text: "User selected: SQLite (auto-selected after timeout)" }], details },
+				{
+					content: [
+						{
+							type: "text",
+							text: "User selected: SQLite (auto-selected after timeout)",
+						},
+					],
+					details,
+				},
 				{} as never,
 				fakeTheme(),
 			),
@@ -91,7 +108,12 @@ describe("ask renderers", () => {
 		const out = render(
 			tool().renderResult?.(
 				{
-					content: [{ type: "text", text: "User chose to chat about this instead of answering." }],
+					content: [
+						{
+							type: "text",
+							text: "User chose to chat about this instead of answering.",
+						},
+					],
 					details,
 				},
 				{} as never,

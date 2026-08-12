@@ -4,13 +4,17 @@
  * while keeping snapshots stable (theme passthrough, no escape codes).
  */
 // pi-lens-ignore: typescript:2307
-import type { ExtensionAPI, ExtensionContext, Theme } from "@earendil-works/pi-coding-agent";
+import type {
+	ExtensionAPI,
+	ExtensionContext,
+	Theme,
+} from "@earendil-works/pi-coding-agent";
 // pi-lens-ignore: typescript:2307
 import type { TUI } from "@earendil-works/pi-tui";
 // pi-lens-ignore: typescript:2307
 import { vi } from "vitest";
 // pi-lens-ignore: typescript:2307
-import type { AskToolInput } from "../../../../../ask-tool/src/types.ts";
+import type { AskToolInput } from "../../src/types.ts";
 
 /** Theme whose style functions pass text through unchanged (ANSI-free snapshots). */
 export function fakeTheme(): Theme {
@@ -81,9 +85,15 @@ export interface ToolHarness {
 			onUpdate: undefined,
 			ctx: ExtensionContext,
 		): Promise<unknown>;
-		renderCall?(args: unknown, theme: Theme): { render(width: number): string[] };
+		renderCall?(
+			args: unknown,
+			theme: Theme,
+		): { render(width: number): string[] };
 		renderResult?(
-			result: { content: Array<{ type: string; text?: string }>; details?: unknown },
+			result: {
+				content: Array<{ type: string; text?: string }>;
+				details?: unknown;
+			},
 			options: unknown,
 			theme: Theme,
 		): { render(width: number): string[] };
@@ -125,12 +135,14 @@ export function setupHarness(
 
 	const registered: { tool?: unknown } = {};
 	const api = {
-		registerFlag: vi.fn((name: string, opts: { type: string; default?: boolean | string }) => {
-			flags.set(name, opts);
-			if (opts.default !== undefined && !flagValues.has(name)) {
-				flagValues.set(name, opts.default);
-			}
-		}),
+		registerFlag: vi.fn(
+			(name: string, opts: { type: string; default?: boolean | string }) => {
+				flags.set(name, opts);
+				if (opts.default !== undefined && !flagValues.has(name)) {
+					flagValues.set(name, opts.default);
+				}
+			},
+		),
 		registerTool: vi.fn((tool: unknown) => {
 			registered.tool = tool;
 		}),
@@ -166,7 +178,9 @@ export function setupHarness(
 }
 
 /** A valid single-question params fixture. */
-export function singleQuestionParams(overrides: Partial<AskToolInput["questions"][number]> = {}): AskToolInput {
+export function singleQuestionParams(
+	overrides: Partial<AskToolInput["questions"][number]> = {},
+): AskToolInput {
 	return {
 		questions: [
 			{

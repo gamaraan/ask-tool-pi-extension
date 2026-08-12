@@ -16,12 +16,12 @@ import { fileURLToPath } from "node:url";
 // pi-lens-ignore: typescript:2307
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 // pi-lens-ignore: typescript:2307
-import { discoverAndLoadExtensions } from "../../src/core/extensions/loader.ts";
+import { discoverAndLoadExtensions } from "../../../pi-mono/packages/coding-agent/src/core/extensions/loader.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // test/ask-user-question → pi-mono root → ask-tool/src/index.ts
-const packageEntry = path.resolve(__dirname, "../../../../../ask-tool/src/index.ts");
-const packageManifest = path.resolve(__dirname, "../../../../../ask-tool/package.json");
+const packageEntry = path.resolve(__dirname, "../../src/index.ts");
+const packageManifest = path.resolve(__dirname, "../../package.json");
 
 describe("ask-tool extension discovery", () => {
 	let tempDir: string;
@@ -40,7 +40,10 @@ describe("ask-tool extension discovery", () => {
 	it("loads the package entry with zero errors and registers the ask tool", async () => {
 		const shimDir = path.join(extensionsDir, "ask-user-question");
 		fs.mkdirSync(shimDir);
-		fs.writeFileSync(path.join(shimDir, "index.ts"), `export { default } from ${JSON.stringify(packageEntry)};\n`);
+		fs.writeFileSync(
+			path.join(shimDir, "index.ts"),
+			`export { default } from ${JSON.stringify(packageEntry)};\n`,
+		);
 
 		const result = await discoverAndLoadExtensions([], tempDir, tempDir);
 
@@ -60,7 +63,11 @@ describe("ask-tool extension discovery", () => {
 			peerDependencies?: Record<string, unknown>;
 		};
 		expect(manifest.version).toBe("0.2.0");
-		for (const dependencies of [manifest.dependencies, manifest.devDependencies, manifest.peerDependencies]) {
+		for (const dependencies of [
+			manifest.dependencies,
+			manifest.devDependencies,
+			manifest.peerDependencies,
+		]) {
 			expect(dependencies ?? {}).not.toHaveProperty("@gamaraan/desktop-notify");
 		}
 	});
@@ -68,7 +75,10 @@ describe("ask-tool extension discovery", () => {
 	it("registers the sequential ask tool with the ported description", async () => {
 		const shimDir = path.join(extensionsDir, "ask-user-question");
 		fs.mkdirSync(shimDir);
-		fs.writeFileSync(path.join(shimDir, "index.ts"), `export { default } from ${JSON.stringify(packageEntry)};\n`);
+		fs.writeFileSync(
+			path.join(shimDir, "index.ts"),
+			`export { default } from ${JSON.stringify(packageEntry)};\n`,
+		);
 
 		const result = await discoverAndLoadExtensions([], tempDir, tempDir);
 		expect(result.errors).toEqual([]);

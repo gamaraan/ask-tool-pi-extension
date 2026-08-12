@@ -1,16 +1,28 @@
 /**
  * Schema + recoverAskQuestions unit tests (plan §9.2: ≥8 cases).
  */
+// pi-lens-ignore: typescript:2307
 import { describe, expect, it } from "vitest";
-import { CHAT_ABOUT_THIS_OPTION, NEXT_OPTION, OTHER_OPTION } from "../../../../../ask-tool/src/constants.ts";
-import { AskParamsSchema, recoverAskQuestions, validateAskParams } from "../../../../../ask-tool/src/schema.ts";
+import {
+	CHAT_ABOUT_THIS_OPTION,
+	NEXT_OPTION,
+	OTHER_OPTION,
+} from "../../src/constants.ts";
+import {
+	AskParamsSchema,
+	recoverAskQuestions,
+	validateAskParams,
+} from "../../src/schema.ts";
 
 const validArgs = {
 	questions: [
 		{
 			id: "auth",
 			question: "Which auth method?",
-			options: [{ label: "JWT" }, { label: "OAuth2", description: "Delegated." }],
+			options: [
+				{ label: "JWT" },
+				{ label: "OAuth2", description: "Delegated." },
+			],
 			recommended: 0,
 		},
 	],
@@ -26,7 +38,13 @@ describe("ask schema", () => {
 	it("accepts a valid multi-question payload with multi and header", () => {
 		const parsed = validateAskParams({
 			questions: [
-				{ id: "a", question: "A?", header: "First", options: [{ label: "x" }], multi: true },
+				{
+					id: "a",
+					question: "A?",
+					header: "First",
+					options: [{ label: "x" }],
+					multi: true,
+				},
 				{ id: "b", question: "B?", options: [{ label: "y" }, { label: "z" }] },
 			],
 		});
@@ -34,20 +52,26 @@ describe("ask schema", () => {
 	});
 
 	it("rejects an empty questions array", () => {
-		expect(() => validateAskParams({ questions: [] })).toThrow(/Invalid ask tool arguments/);
+		expect(() => validateAskParams({ questions: [] })).toThrow(
+			/Invalid ask tool arguments/,
+		);
 	});
 
 	it("rejects a question with zero options", () => {
-		expect(() => validateAskParams({ questions: [{ id: "q", question: "Q?", options: [] }] })).toThrow(
-			/Invalid ask tool arguments/,
-		);
+		expect(() =>
+			validateAskParams({
+				questions: [{ id: "q", question: "Q?", options: [] }],
+			}),
+		).toThrow(/Invalid ask tool arguments/);
 	});
 
 	for (const reserved of [OTHER_OPTION, CHAT_ABOUT_THIS_OPTION, NEXT_OPTION]) {
 		it(`rejects an option label colliding with the reserved label "${reserved}"`, () => {
 			expect(() =>
 				validateAskParams({
-					questions: [{ id: "q", question: "Q?", options: [{ label: reserved }] }],
+					questions: [
+						{ id: "q", question: "Q?", options: [{ label: reserved }] },
+					],
 				}),
 			).toThrow(/reserved runtime labels/);
 		});
@@ -56,7 +80,14 @@ describe("ask schema", () => {
 	it("accepts an out-of-range recommended index (no validation error)", () => {
 		expect(() =>
 			validateAskParams({
-				questions: [{ id: "q", question: "Q?", options: [{ label: "a" }], recommended: 5 }],
+				questions: [
+					{
+						id: "q",
+						question: "Q?",
+						options: [{ label: "a" }],
+						recommended: 5,
+					},
+				],
 			}),
 		).not.toThrow();
 	});
@@ -80,12 +111,18 @@ describe("recoverAskQuestions", () => {
 
 	it("returns undefined for malformed persisted arguments", () => {
 		expect(recoverAskQuestions({ questions: [] })).toBeUndefined();
-		expect(recoverAskQuestions({ questions: [{ id: "q", question: "Q?", options: [] }] })).toBeUndefined();
+		expect(
+			recoverAskQuestions({
+				questions: [{ id: "q", question: "Q?", options: [] }],
+			}),
+		).toBeUndefined();
 		expect(recoverAskQuestions(null)).toBeUndefined();
 		expect(recoverAskQuestions("not-an-object")).toBeUndefined();
 		expect(
 			recoverAskQuestions({
-				questions: [{ id: "q", question: "Q?", options: [{ label: OTHER_OPTION }] }],
+				questions: [
+					{ id: "q", question: "Q?", options: [{ label: OTHER_OPTION }] },
+				],
 			}),
 		).toBeUndefined();
 	});

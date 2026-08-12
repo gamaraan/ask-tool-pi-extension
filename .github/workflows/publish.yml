@@ -3,8 +3,8 @@ name: publish
 # Publishes @gamaraan/ask-tool to npm when a v* tag is pushed. The verify job
 # re-runs the full gate (typecheck, unit tests, package contents, tag
 # invariants) and the publish job releases with npm provenance (id-token).
-# Unit tests use a temporary pi-mono sibling checkout only as their dependency
-# and Vitest host; all test sources remain in this repository.
+# Unit tests run from ask-tool and use a read-only pi-mono sibling checkout for
+# dependency sources and Vitest; all test sources remain in this repository.
 on:
   push:
     tags:
@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Checkout pi-mono (temporary test host)
+      - name: Checkout pi-mono (read-only test dependency host)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: earendil-works/pi-mono

@@ -1,46 +1,55 @@
 /**
  * Pure format-helper unit tests (plan §9.2: ≥10 cases, golden output).
  */
+// pi-lens-ignore: typescript:2307
 import { describe, expect, it } from "vitest";
-import { RECOMMENDED_SUFFIX } from "../../../../../ask-tool/src/constants.ts";
+import { RECOMMENDED_SUFFIX } from "../../src/constants.ts";
 import {
 	addRecommendedSuffix,
 	formatQuestionResult,
 	formatSingleQuestionResponse,
 	getAutoSelectionOnTimeout,
 	stripRecommendedSuffix,
-} from "../../../../../ask-tool/src/format.ts";
-import type { QuestionResult } from "../../../../../ask-tool/src/types.ts";
+} from "../../src/format.ts";
+import type { QuestionResult } from "../../src/types.ts";
 
-const options = [{ label: "SQLite", description: "File-based." }, { label: "PostgreSQL" }, { label: "MongoDB" }];
+const options = [
+	{ label: "SQLite", description: "File-based." },
+	{ label: "PostgreSQL" },
+	{ label: "MongoDB" },
+];
 
 describe("addRecommendedSuffix", () => {
 	it("appends the suffix to the recommended index only", () => {
 		const result = addRecommendedSuffix(options, 1);
-		expect(result.map((option) => option.label)).toEqual(["SQLite", `PostgreSQL${RECOMMENDED_SUFFIX}`, "MongoDB"]);
+		expect(result.map((option) => option.label)).toEqual([
+			"SQLite",
+			`PostgreSQL${RECOMMENDED_SUFFIX}`,
+			"MongoDB",
+		]);
 		expect(result[1]?.description).toBeUndefined();
 	});
 
 	it("does not double-append when the label already ends with the suffix", () => {
 		const already = [{ label: `SQLite${RECOMMENDED_SUFFIX}` }];
-		expect(addRecommendedSuffix(already, 0)[0]?.label).toBe(`SQLite${RECOMMENDED_SUFFIX}`);
+		expect(addRecommendedSuffix(already, 0)[0]?.label).toBe(
+			`SQLite${RECOMMENDED_SUFFIX}`,
+		);
 	});
 
 	it("leaves all labels untouched for an out-of-range or negative index", () => {
-		expect(addRecommendedSuffix(options, 99).map((option) => option.label)).toEqual([
-			"SQLite",
-			"PostgreSQL",
-			"MongoDB",
-		]);
-		expect(addRecommendedSuffix(options, -1).map((option) => option.label)).toEqual([
-			"SQLite",
-			"PostgreSQL",
-			"MongoDB",
-		]);
+		expect(
+			addRecommendedSuffix(options, 99).map((option) => option.label),
+		).toEqual(["SQLite", "PostgreSQL", "MongoDB"]);
+		expect(
+			addRecommendedSuffix(options, -1).map((option) => option.label),
+		).toEqual(["SQLite", "PostgreSQL", "MongoDB"]);
 	});
 
 	it("leaves all labels untouched when recommended is undefined", () => {
-		expect(addRecommendedSuffix(options).map((option) => option.label)).toEqual(["SQLite", "PostgreSQL", "MongoDB"]);
+		expect(addRecommendedSuffix(options).map((option) => option.label)).toEqual(
+			["SQLite", "PostgreSQL", "MongoDB"],
+		);
 	});
 });
 
@@ -74,41 +83,64 @@ describe("getAutoSelectionOnTimeout", () => {
 
 describe("formatSingleQuestionResponse", () => {
 	it("formats a selected answer", () => {
-		expect(formatSingleQuestionResponse({ selectedOptions: ["JWT"], multi: false })).toBe("User selected: JWT");
+		expect(
+			formatSingleQuestionResponse({ selectedOptions: ["JWT"], multi: false }),
+		).toBe("User selected: JWT");
 	});
 
 	it("formats a multi selection", () => {
-		expect(formatSingleQuestionResponse({ selectedOptions: ["JWT", "OAuth2"], multi: true })).toBe(
-			"User selected: JWT, OAuth2",
-		);
+		expect(
+			formatSingleQuestionResponse({
+				selectedOptions: ["JWT", "OAuth2"],
+				multi: true,
+			}),
+		).toBe("User selected: JWT, OAuth2");
 	});
 
 	it("formats a custom input", () => {
-		expect(formatSingleQuestionResponse({ selectedOptions: [], customInput: "Something else", multi: false })).toBe(
-			"User provided custom input: Something else",
-		);
+		expect(
+			formatSingleQuestionResponse({
+				selectedOptions: [],
+				customInput: "Something else",
+				multi: false,
+			}),
+		).toBe("User provided custom input: Something else");
 	});
 
 	it("indents multi-line custom input", () => {
-		expect(formatSingleQuestionResponse({ selectedOptions: [], customInput: "line1\nline2", multi: false })).toBe(
-			"User provided custom input:\n  line1\n  line2",
-		);
+		expect(
+			formatSingleQuestionResponse({
+				selectedOptions: [],
+				customInput: "line1\nline2",
+				multi: false,
+			}),
+		).toBe("User provided custom input:\n  line1\n  line2");
 	});
 
 	it("marks timeout auto-selection", () => {
-		expect(formatSingleQuestionResponse({ selectedOptions: ["SQLite"], multi: false, timedOut: true })).toBe(
-			"User selected: SQLite (auto-selected after timeout)",
-		);
+		expect(
+			formatSingleQuestionResponse({
+				selectedOptions: ["SQLite"],
+				multi: false,
+				timedOut: true,
+			}),
+		).toBe("User selected: SQLite (auto-selected after timeout)");
 	});
 
 	it("appends a note", () => {
-		expect(formatSingleQuestionResponse({ selectedOptions: ["JWT"], multi: false, note: "check expiry" })).toBe(
-			"User selected: JWT\nUser added note: check expiry",
-		);
+		expect(
+			formatSingleQuestionResponse({
+				selectedOptions: ["JWT"],
+				multi: false,
+				note: "check expiry",
+			}),
+		).toBe("User selected: JWT\nUser added note: check expiry");
 	});
 
 	it("reports a plain cancel", () => {
-		expect(formatSingleQuestionResponse({ selectedOptions: [], multi: false })).toBe("User cancelled the selection");
+		expect(
+			formatSingleQuestionResponse({ selectedOptions: [], multi: false }),
+		).toBe("User cancelled the selection");
 	});
 });
 
@@ -133,7 +165,9 @@ describe("formatQuestionResult", () => {
 			selectedOptions: ["JWT", "OAuth2"],
 			timedOut: true,
 		};
-		expect(formatQuestionResult(result)).toBe("auth: [JWT, OAuth2] (auto-selected after timeout)");
+		expect(formatQuestionResult(result)).toBe(
+			"auth: [JWT, OAuth2] (auto-selected after timeout)",
+		);
 	});
 
 	it("formats a custom input result", () => {
@@ -157,6 +191,8 @@ describe("formatQuestionResult", () => {
 			selectedOptions: [],
 			note: "user walked away",
 		};
-		expect(formatQuestionResult(result)).toBe("auth: (cancelled) (note: user walked away)");
+		expect(formatQuestionResult(result)).toBe(
+			"auth: (cancelled) (note: user walked away)",
+		);
 	});
 });
