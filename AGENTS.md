@@ -118,13 +118,6 @@ baseline.
 - Mock style: `test-helpers.ts` provides `fakeTheme` (ANSI-free passthrough),
   `fakeTui`, `setupHarness` (mock API + ctx), and pi key sequences (`keys`).
 
-## Skill/extension replacement policy
-
-Any skill, AGENTS.md, or doc that instructs agents to use the retired
-interactive-question extension must be updated to name
-`@gamaraan/ask-tool` (tool name: `ask`). Zero live references to the old name
-may remain (a grep audit over `~/.pi/` and the package root enforces this).
-
 ## Roadmap (follow-ups, separate PRs — do NOT fold into this package)
 
 1. Core `ExtensionUIContext.select` upgrade to items with descriptions (would
