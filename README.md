@@ -6,8 +6,7 @@ multiple-choice questions the agent asks the user mid-turn, with a rich TUI
 dialog, recommended options, live timeouts with auto-select, free-text
 answers, and multi-question paging.
 
-It is the full replacement for the obsolete `@juicesharp/rpiv-ask-user-question`
-extension.
+It is the full replacement for the obsolete interactive-question extension.
 
 ## What it does
 

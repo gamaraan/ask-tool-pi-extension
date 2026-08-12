@@ -3,8 +3,9 @@
 Port of omp's interactive `ask` tool (`oh-my-pi/packages/coding-agent/src/tools/ask.ts`) to
 upstream pi (`pi-mono`) packaged as a standalone, installable pi **extension**, published to
 npm as **`@gamaraan/ask-tool`**. It is the full replacement for the now-obsolete
-`@juicesharp/rpiv-ask-user-question` extension (and its associated skill) referenced in the
-global `AGENTS.md`; once shipped, that old extension and skill are retired in favor of this one.
+interactive-question extension (and its associated skill) referenced in the
+global `AGENTS.md`; once shipped, that old extension and skill are retired in
+favor of this one.
 
 This document is the **development plan**, definition-of-done per task, the test strategy used
 **during** development, the end-to-end verification used **after** development to confirm every
@@ -75,7 +76,7 @@ plan if they drifted).
 6. The plan's task DoD checkboxes (§8) are all checked and every task's verification commands pass.
 7. The package is publish-ready as `@gamaraan/ask-tool` on npm: `README.md`, `AGENTS.md`,
    `LICENSE`, and a complete `package.json` exist and `npm publish --dry-run` is clean (T12).
-8. The obsolete `@juicesharp/rpiv-ask-user-question` extension and its mandated-use skill are
+8. The obsolete interactive-question extension and its mandated-use skill are
    retired: zero active references to the old package name remain in the package or `~/.pi/`, and
    the global `AGENTS.md` reference now names `@gamaraan/ask-tool` (verified by §12 audit #9).
 
@@ -171,7 +172,7 @@ records the choice in §6 (Decision D1):
 - **Option β — standalone repo/package** `@gamaraan/ask-tool` with its own
   `package.json`, `dist/`, and a `"pi": { "extensions": ["./dist/index.js"] }` manifest (the
   published-extension shape; this is the package that replaces the obsolete
-  `@juicesharp/rpiv-ask-user-question` referenced in the global `AGENTS.md`).
+  interactive-question extension referenced in the global `AGENTS.md`).
 
 Recommended: **β for the deliverable, α-style folder for in-repo unit tests** (vitest config
 already aliases the workspace src, so tests under `packages/coding-agent/test/` can import the
@@ -241,7 +242,7 @@ recorded as decisions to be confirmed at implementation kickoff.
   `@gamaraan/ask-tool` package) vs the hybrid in §4. Recommend **hybrid**: standalone
   package, with its TS sources also reachable from the monorepo test runner via a `src/extensions-vendor/`
   mirror so the vitest alias graph covers them. The npm package name is fixed: `@gamaraan/ask-tool`
-  (this **replaces** the obsolete `@juicesharp/rpiv-ask-user-question`; do not revive that name).
+  (this **replaces** the obsolete interactive-question extension; do not revive that name).
   Confirm before Task T1.
 - **D2 — Timeout config surface.** pi extensions cannot read `SettingsManager`. Options:
   (a) register CLI flags `--ask-timeout <seconds>` + `--ask-notify <off|on>` via `pi.registerFlag`
@@ -444,7 +445,7 @@ directory and `pi` picks it up (instructions followed by a human OR a scripted s
 
 **Context:** Once implementation is finished, this extension is published to npm as
 `@gamaraan/ask-tool`. It is the intended full replacement for the obsolete
-`@juicesharp/rpiv-ask-user-question` extension and its associated skill referenced in the global
+interactive-question extension and its associated skill referenced in the global
 `AGENTS.md`. This task packages the project for publishing and retires that old skill.
 
 **DoD:**
@@ -455,7 +456,8 @@ directory and `pi` picks it up (instructions followed by a human OR a scripted s
   (`Other (type your own)`, `Chat about this`, `Next →`), `recommended`/`(Recommended)` suffix,
   `multi`, timeout auto-select, multi-question paging, the `--ask-timeout` / `PI_ASK_TIMEOUT_SECONDS`
   config (per D2), install + enable instructions (`pi.extensions` discovery or `~/.pi/agent/extensions/`),
-  the explicit statement that this **replaces** `@juicesharp/rpiv-ask-user-question`, and how to run
+  the explicit statement that this **replaces** the obsolete interactive-question
+  extension, and how to run
   the tests.
 - **`AGENTS.md`** at the package root guiding future development effort: project layout map,
   the three-path architecture summary (§3), the no-core-changes scope invariant (§1.2), the
@@ -470,11 +472,11 @@ directory and `pi` picks it up (instructions followed by a human OR a scripted s
   `@earendil-works/pi-*` packages (declared also as devDeps for the workspace build), `scripts`
   (`build`, `test`, `prepublishOnly`), `repository`, `author`, `license`, `keywords`. Zero runtime
   `dependencies` (per §4). Versioning starts at `0.1.0`.
-- **Skill retirement:** the skill that mandated use of the old `@juicesharp/rpiv-ask-user-question`
+- **Skill retirement:** the skill that mandated use of the old interactive-question
   extension is now obsolete. Refactor that skill to point at `@gamaraan/ask-tool` instead (update
   the extension/package name it instructs agents to use, and the tool name if the old skill named
   the old tool). If the skill is no longer needed as a standalone artifact, mark it retired. The
-  global `AGENTS.md` reference to `@juicesharp/rpiv-ask-user-question` is updated in the same change
+  global `AGENTS.md` reference to the old extension is updated in the same change
   to name `@gamaraan/ask-tool`. Record the skill edit here as a checkbox, not as prose procrastinated
   to “later”.
 
@@ -486,9 +488,11 @@ directory and `pi` picks it up (instructions followed by a human OR a scripted s
   `license`/`description`.
 - A fresh install of the tarball into a temp dir + enabling it in `~/.pi/agent/extensions/` makes
   the `ask` tool appear (re-run the §10.2 F1 check).
-- The old-skill refactor checkbox is checked and a `grep -RI "rpiv-ask-user-question" ~/.pi/` in the
+- The old-skill refactor checkbox is checked and a case-insensitive grep for the
+  old package name over `~/.pi/` in the
   user environment returns no remaining live references (only, optionally, a retire note).
-- `grep -RI "@juicesharp/rpiv-ask-user-question" <package-root>/` returns **zero** matches.
+- A case-insensitive grep for the old package name over `<package-root>/` returns
+  **zero** matches.
 - README, AGENTS.md, LICENSE, and package.json all pass `npm run check` lint rules.
 
 ---
@@ -654,11 +658,10 @@ Run this audit at PR time, before asking the user to merge. Every item must hold
 
 8. **Loader audit — discovery test green** (T8 verify) and a fresh-install smoke (T10) works.
 9. **Naming / old-extension-replacement audit — the package is `@gamaraan/ask-tool`, with zero
-   live references to the obsolete `@juicesharp/rpiv-ask-user-question`:**
+   live references to the obsolete interactive-question extension:**
 
-   ```bash
-   grep -RI "@juicesharp/rpiv-ask-user-question\|rpiv-ask-user-question" <package-root>/ ~/.pi/
-   ```
+   Run a case-insensitive grep for the retired extension's package name across
+   `<package-root>/` and `~/.pi/`.
 
    Expected inside `<package-root>/`: zero matches. Inside `~/.pi/`: only the retired-skill
    note (if any), never an active instruction to install/require the old name. The skill that
@@ -681,8 +684,8 @@ If all nine pass, the plan was respected and the feature is fully working.
 | `executionMode: "sequential"` semantics differ from omp `concurrency:"exclusive"` | L | M | Confirmed equivalent in `BACKGROUND.md` §3; T5 unit test asserts the value. |
 | pi-tui `SelectList` lacks a primitive omp relied on (e.g. `markableCount`/`checkedIndices`) | M | L | `option-list.ts` renders markers itself; `SelectList` only provides row geometry. Fallback to hand-rolled rows if needed. |
 | Standalone package can't resolve `@earendil-works/pi-*` as peerDeps cleanly | M | M | Declare them `peerDependencies` + `devDependencies` (workspace) in `package.json`; confirm `npm pack` + install into a clean dir. |
-| The old `@juicesharp/rpiv-ask-user-question` skill/AGENTS.md reference is missed during retirement | M | L | T12 has an explicit checklist for the skill refactor + §12 audit #9 greps for leftover `rpiv-ask-user-question` references in both the package and `~/.pi/`. |
-| Renaming drift: a stale `@juicesharp/...` string survives in a test fixture or doc | L | L | The §12 audit #9 grep runs over the package root; add it to CI alongside `check:ts-imports`. |
+| The old interactive-question skill/AGENTS.md reference is missed during retirement | M | L | T12 has an explicit checklist for the skill refactor + §12 audit #9 greps for leftover old-name references in both the package and `~/.pi/`. |
+| Renaming drift: a stale reference to the retired extension survives in a test fixture or doc | L | L | The §12 audit #9 grep runs over the package root; add it to CI alongside `check:ts-imports`. |
 
 ---
 

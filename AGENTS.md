@@ -9,7 +9,7 @@ Guidance for future development of this repository. The authoritative spec is
 A standalone pi extension package that ports OMP's `ask` tool
 (`oh-my-pi/packages/coding-agent/src/tools/ask.ts` + `modes/components/ask-dialog.ts`)
 to upstream pi. Published as `@gamaraan/ask-tool`. It **replaces** the obsolete
-`@juicesharp/rpiv-ask-user-question` extension — never revive that name.
+interactive-question extension — never revive the old package name.
 
 ## Layout
 
@@ -122,8 +122,8 @@ baseline.
 
 ## Skill/extension replacement policy
 
-Any skill, AGENTS.md, or doc that instructs agents to use the old
-`@juicesharp/rpiv-ask-user-question` extension must be updated to name
+Any skill, AGENTS.md, or doc that instructs agents to use the retired
+interactive-question extension must be updated to name
 `@gamaraan/ask-tool` (tool name: `ask`). Zero live references to the old name
 may remain (plan §12 audit #9 greps `~/.pi/` and the package root).
 
