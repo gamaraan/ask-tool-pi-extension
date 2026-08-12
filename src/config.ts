@@ -18,11 +18,43 @@ import {
  * Environment access that typechecks with or without @types/node installed
  * (the monorepo test graph provides node types; standalone consumers may not).
  */
-function envValue(name: string): string | undefined {
-	const env = (
+function currentEnv(): Readonly<Record<string, string | undefined>> {
+	return (
 		globalThis as { process?: { env?: Record<string, string | undefined> } }
-	).process?.env;
-	return env?.[name];
+	).process?.env ?? {};
+}
+
+function envValue(name: string): string | undefined {
+	return currentEnv()[name];
+}
+
+/**
+ * Whether the current terminal advertises a notification protocol that can
+ * manage focus-aware notifications itself. Unknown/base terminals are not
+ * eligible for the desktop EventBus request because native desktop fallbacks
+ * cannot tell whether the terminal window is focused.
+ */
+export function supportsTerminalNotifications(
+	env: Readonly<Record<string, string | undefined>> = currentEnv(),
+): boolean {
+	const program = env.TERM_PROGRAM?.trim().toLowerCase() ?? "";
+	const term = env.TERM?.trim().toLowerCase() ?? "";
+	return (
+		program === "kitty" ||
+		term === "xterm-kitty" ||
+		Boolean(env.KITTY_WINDOW_ID) ||
+		program === "ghostty" ||
+		Boolean(env.GHOSTTY_RESOURCES_DIR) ||
+		program === "wezterm" ||
+		Boolean(env.WEZTERM_PANE) ||
+		program === "iterm.app" ||
+		program === "iterm2" ||
+		Boolean(env.ITERM_SESSION_ID) ||
+		env?.LC_TERMINAL?.trim().toLowerCase() === "iterm2" ||
+		program === "warpterminal" ||
+		program === "warp" ||
+		term.includes("ghostty")
+	);
 }
 
 export interface AskToolConfig {

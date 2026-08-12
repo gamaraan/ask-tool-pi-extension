@@ -80,10 +80,15 @@ modes return an `Error: Ask tool requires interactive mode` result without
 throwing.
 
 When `ask-notify` is on, the existing in-UI waiting notice is retained. For TUI
-asks, ask-tool also emits a best-effort `desktop-notify:request` EventBus event
-with the waiting notification payload. `@gamaraan/desktop-notify` is optional:
-when it is loaded it may handle the request, and when it is unavailable no
-action is required.
+asks in terminals advertising OSC 9/99 notifications (Kitty, Ghostty, WezTerm,
+iTerm2, or Warp), ask-tool also emits a best-effort
+`desktop-notify:request` EventBus event. The terminal owns focus handling, so a
+waiting notification is intended to appear only while its window is inactive.
+Unknown/base terminals do not receive the EventBus request because native
+`notify-send` fallbacks cannot reliably determine terminal focus.
+
+`@gamaraan/desktop-notify` is optional: when it is loaded it may handle the
+request, and when it is unavailable no action is required.
 
 ## Configuration
 

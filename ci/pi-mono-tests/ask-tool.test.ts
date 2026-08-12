@@ -8,6 +8,8 @@ import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 // pi-lens-ignore: typescript:2307
 import { beforeEach, describe, expect, it, vi } from "vitest";
 // pi-lens-ignore: typescript:2307
+import { supportsTerminalNotifications } from "../../src/config.ts";
+// pi-lens-ignore: typescript:2307
 import { OTHER_OPTION } from "../../src/constants.ts";
 // pi-lens-ignore: typescript:2307
 import { ASK_TOOL_DESCRIPTION } from "../../src/description.ts";
@@ -103,7 +105,18 @@ describe("ask tool extension", () => {
 		expect(result.content[0]?.text).toBe("User cancelled the selection");
 	});
 
+	it("recognizes terminals with focus-aware native notification protocols", () => {
+		expect(supportsTerminalNotifications({ TERM_PROGRAM: "kitty" })).toBe(true);
+		expect(
+			supportsTerminalNotifications({
+				TERM_PROGRAM: "xterm",
+				TERM: "xterm-256color",
+			}),
+		).toBe(false);
+	});
+
 	it("Path A: widget dialog drives the callbacks and returns the mapped result", async () => {
+		vi.stubEnv("TERM_PROGRAM", "kitty");
 		let widgetCleared = false;
 		const { tool, ctx, events } = setupHarness({
 			mode: "tui",
@@ -294,11 +307,23 @@ describe("ask tool extension", () => {
 		expect(second.events.emit).not.toHaveBeenCalled();
 	});
 
-	it("does not request desktop notifications for disabled TUI or headless asks", async () => {
+	it("does not request desktop notifications for unsupported TUI terminals", async () => {
+		vi.stubEnv("TERM_PROGRAM", "xterm");
+		vi.stubEnv("TERM", "xterm-256color");
+		for (const variable of [
+			"KITTY_WINDOW_ID",
+			"GHOSTTY_RESOURCES_DIR",
+			"WEZTERM_PANE",
+			"ITERM_SESSION_ID",
+			"LC_TERMINAL",
+		]) {
+			vi.stubEnv(variable, "");
+		}
+		expect(supportsTerminalNotifications()).toBe(false);
 		const tui = setupHarness({
 			mode: "tui",
 			hasUI: true,
-			flags: { "ask-notify": "off" },
+			flags: { "ask-notify": "on" },
 			register: (pi) => askToolExtension(pi),
 			ui: {
 				setWidget: (async (_key: unknown, content: unknown) => {
@@ -318,7 +343,10 @@ describe("ask tool extension", () => {
 			undefined,
 			tui.ctx,
 		);
-		expect(tui.ctx.ui.notify).not.toHaveBeenCalled();
+		expect(tui.ctx.ui.notify).toHaveBeenCalledWith(
+			"Ask tool is waiting for input",
+			"info",
+		);
 		expect(tui.events.emit).not.toHaveBeenCalled();
 
 		const headless = setupHarness({
