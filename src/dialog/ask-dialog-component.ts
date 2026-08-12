@@ -589,6 +589,13 @@ export class AskDialogComponent implements Component {
 
 	private footerHintText(indicator: string): string {
 		const cancel = "Esc cancel";
+		if (this.editMode !== "none") {
+			// The inline editor owns the body while active; the option-list hints
+			// would be wrong (and the editor replaces the list, see renderQuestionBody).
+			return this.editMode === "note"
+				? "Enter to save note • Esc to go back"
+				: "Enter to submit • Esc to go back";
+		}
 		if (this.isSubmitTab()) {
 			const scroll = indicator ? ` ${indicator} scroll ·` : "";
 			return `Enter submit · ↑/↓ scroll ·${scroll} ${cancel}`;
@@ -855,6 +862,23 @@ export class AskDialogComponent implements Component {
 		const active = this.activeQuestionState();
 		if (!active) return { lines: [], scrollOffset: 0, indicator: "" };
 		const { question, state } = active;
+		if (this.editMode !== "none") {
+			// Inline editor for "Other" / note answers. The editor REPLACES the
+			// option list while active — the list already fills the measured body
+			// rows, so appending the editor below it would slice it off-screen
+			// (the reported "type your own freezes" bug). The question title stays
+			// in the header; Esc returns to the list with state intact.
+			const editorLines = this.editor.render(Math.max(1, width - 2));
+			const hint = this.theme.fg(
+				"dim",
+				this.editMode === "note"
+					? "Enter to save note • Esc to go back"
+					: "Enter to submit • Esc to go back",
+			);
+			const lines = [...editorLines.map((line) => ` ${line}`), hint];
+			while (lines.length < Math.min(maxRows, 5)) lines.push("");
+			return { lines: lines.slice(0, maxRows), scrollOffset: 0, indicator: "" };
+		}
 		const rowItems = this.questionRows(question);
 		state.cursorIndex = clamp(
 			state.cursorIndex,
@@ -868,26 +892,7 @@ export class AskDialogComponent implements Component {
 			width,
 			maxRows,
 		);
-		if (this.editMode === "none") return list;
-		// Inline editor for "Other" / note answers, rendered below the list.
-		const editorLines = this.editor.render(Math.max(1, width - 2));
-		const hint = this.theme.fg(
-			"dim",
-			this.editMode === "note"
-				? "Enter to save note • Esc to go back"
-				: "Enter to submit • Esc to go back",
-		);
-		const combined = [
-			...list.lines,
-			"",
-			...editorLines.map((line) => ` ${line}`),
-			hint,
-		];
-		return {
-			lines: combined.slice(0, maxRows),
-			scrollOffset: list.scrollOffset,
-			indicator: "",
-		};
+		return list;
 	}
 
 	private renderQuestionList(
