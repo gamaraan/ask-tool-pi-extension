@@ -1,0 +1,57 @@
+{
+	"name": "@gamaraan/ask-tool",
+	"version": "0.1.0",
+	"description": "pi extension that ports the Oh My Pi (OMP) ask tool: interactive multiple-choice questions with rich TUI dialogs, recommended options, timeouts with auto-select, free-text answers, and multi-question paging.",
+	"keywords": ["pi-package", "omp", "ask", "interactive", "questions", "tui"],
+	"license": "MIT",
+	"type": "module",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"files": ["src", "README.md", "AGENTS.md", "LICENSE"],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/gamaraan/ask-tool-pi-extension.git"
+	},
+	"homepage": "https://github.com/gamaraan/ask-tool-pi-extension",
+	"bugs": {
+		"url": "https://github.com/gamaraan/ask-tool-pi-extension/issues"
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"scripts": {
+		"test": "cd ../pi-mono/packages/coding-agent && npx vitest run test/ask-user-question",
+		"typecheck": "cd ../pi-mono && ./node_modules/.bin/tsgo --noEmit -p ../ask-tool/tsconfig.json",
+		"verify:package": "npm pack --dry-run --json"
+	},
+	"publishConfig": {
+		"access": "public",
+		"provenance": true
+	},
+	"pi": {
+		"extensions": ["./src/index.ts"]
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-ai": "*",
+		"@earendil-works/pi-coding-agent": "*",
+		"@earendil-works/pi-tui": "*"
+	},
+	"peerDependenciesMeta": {
+		"@earendil-works/pi-ai": {
+			"optional": true
+		},
+		"@earendil-works/pi-coding-agent": {
+			"optional": true
+		},
+		"@earendil-works/pi-tui": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@earendil-works/pi-ai": "0.84.1",
+		"@earendil-works/pi-coding-agent": "0.84.1",
+		"@earendil-works/pi-tui": "0.84.1",
+		"@types/node": "22.19.19",
+		"typescript": "5.9.3"
+	}
+}

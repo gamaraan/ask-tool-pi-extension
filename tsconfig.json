@@ -1,0 +1,38 @@
+{
+	"extends": "../pi-mono/tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"types": ["node"],
+		"typeRoots": ["../pi-mono/node_modules/@types"],
+		"paths": {
+			"typebox": ["../pi-mono/node_modules/typebox/build/index.d.mts"],
+			"typebox/value": ["../pi-mono/node_modules/typebox/build/value/index.d.mts"],
+			"typebox/compile": ["../pi-mono/node_modules/typebox/build/compile/index.d.mts"],
+			"@earendil-works/pi-telemetry": ["../pi-mono/packages/telemetry/src/index.ts"],
+			"@earendil-works/pi-telemetry/testing": ["../pi-mono/packages/telemetry/src/testing/index.ts"],
+			"@earendil-works/pi-ai": ["../pi-mono/packages/ai/src/index.ts"],
+			"@earendil-works/pi-ai/compat": ["../pi-mono/packages/ai/src/compat.ts"],
+			"@earendil-works/pi-ai/oauth": ["../pi-mono/packages/ai/src/oauth.ts"],
+			"@earendil-works/pi-ai/providers/all": ["../pi-mono/packages/ai/src/providers/all.ts"],
+			"@earendil-works/pi-ai/*": ["../pi-mono/packages/ai/src/*.ts", "../pi-mono/packages/ai/src/providers/*.ts"],
+			"@earendil-works/pi-agent-core": ["../pi-mono/packages/agent/src/index.ts"],
+			"@earendil-works/pi-agent-core/*": ["../pi-mono/packages/agent/src/*"],
+			"@earendil-works/pi-tui": ["../pi-mono/packages/tui/src/index.ts"],
+			"@earendil-works/pi-tui/*": ["../pi-mono/packages/tui/src/*"],
+			"@earendil-works/pi-coding-agent": ["../pi-mono/packages/coding-agent/src/index.ts"],
+			"@earendil-works/pi-coding-agent/*": ["../pi-mono/packages/coding-agent/src/*"],
+			"@earendil-works/pi-protocol": ["../pi-mono/packages/protocol/src/index.ts"],
+			"@earendil-works/pi-protocol/*": ["../pi-mono/packages/protocol/src/*"],
+			"@earendil-works/pi-client": ["../pi-mono/packages/client/src/index.ts"],
+			"@earendil-works/pi-client/*": ["../pi-mono/packages/client/src/*"],
+			"@earendil-works/pi-server": ["../pi-mono/packages/server/src/index.ts"],
+			"@earendil-works/pi-server/*": ["../pi-mono/packages/server/src/*"],
+			"@earendil-works/pi-session-backend-sqlite-node": [
+				"../pi-mono/packages/session-backends/sqlite-node/src/index.ts"
+			]
+		}
+	},
+	"include": ["src/**/*.ts", "../pi-mono/packages/coding-agent/src/**/*.d.ts"]
+}
