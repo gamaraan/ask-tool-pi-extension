@@ -8,6 +8,7 @@ import type {
 	ExtensionAPI,
 	ExtensionContext,
 	Theme,
+	// pi-lens-ignore: typescript:2307
 } from "@earendil-works/pi-coding-agent";
 // pi-lens-ignore: typescript:2307
 import type { TUI } from "@earendil-works/pi-tui";
@@ -104,6 +105,10 @@ export interface ToolHarness {
 		label?: string;
 	};
 	flags: Map<string, { type: string; default?: boolean | string }>;
+	commands: Map<
+		string,
+		{ handler: (args: string, ctx: ExtensionContext) => Promise<void> }
+	>;
 	events: {
 		emit: ReturnType<typeof vi.fn>;
 		on: ReturnType<typeof vi.fn>;
@@ -123,10 +128,15 @@ export function setupHarness(
 	} = {},
 ): ToolHarness {
 	const flags = new Map<string, { type: string; default?: boolean | string }>();
+	const commands = new Map<
+		string,
+		{ handler: (args: string, ctx: ExtensionContext) => Promise<void> }
+	>();
 	const flagValues = new Map(Object.entries(options.flags ?? {}));
 	const events = { emit: vi.fn(), on: vi.fn(() => () => undefined) };
 	const harness: ToolHarness = {
 		flags,
+		commands,
 		events,
 		getFlag(name: string): boolean | string | undefined {
 			return flagValues.has(name) ? flagValues.get(name) : undefined;
@@ -146,6 +156,16 @@ export function setupHarness(
 		registerTool: vi.fn((tool: unknown) => {
 			registered.tool = tool;
 		}),
+		registerCommand: vi.fn(
+			(
+				name: string,
+				command: {
+					handler: (args: string, ctx: ExtensionContext) => Promise<void>;
+				},
+			) => {
+				commands.set(name, command);
+			},
+		),
 		getFlag: harness.getFlag,
 		events,
 	} as unknown as ExtensionAPI;
@@ -168,6 +188,7 @@ export function setupHarness(
 		ui,
 		cwd: "/tmp",
 		abort: vi.fn(),
+		reload: vi.fn(async () => undefined),
 		signal: options.signal,
 	} as unknown as ExtensionContext;
 

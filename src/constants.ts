@@ -44,3 +44,6 @@ export const ASK_NOTIFY_FLAG = "ask-notify";
 /** Environment variables read when the corresponding flag is not set. */
 export const ASK_TIMEOUT_ENV = "PI_ASK_TIMEOUT_SECONDS";
 export const ASK_NOTIFY_ENV = "PI_ASK_NOTIFY";
+
+/** Global static configuration filename under Pi's agent directory. */
+export const ASK_CONFIG_FILE_NAME = "ask-tool.json";

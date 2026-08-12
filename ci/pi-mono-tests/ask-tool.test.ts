@@ -3,12 +3,17 @@
  * served description contract (plan §9.2: ≥7 cases + T2 description pins).
  */
 
+import { rmSync } from "node:fs";
 // pi-lens-ignore: typescript:2307
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 // pi-lens-ignore: typescript:2307
 import { beforeEach, describe, expect, it, vi } from "vitest";
 // pi-lens-ignore: typescript:2307
-import { supportsTerminalNotifications } from "../../src/config.ts";
+import {
+	readAskConfig,
+	supportsTerminalNotifications,
+	writeAskConfig,
+} from "../../src/config.ts";
 // pi-lens-ignore: typescript:2307
 import { OTHER_OPTION } from "../../src/constants.ts";
 // pi-lens-ignore: typescript:2307
@@ -25,11 +30,14 @@ import {
 
 describe("ask tool extension", () => {
 	beforeEach(() => {
+		vi.restoreAllMocks();
 		vi.unstubAllEnvs();
+		vi.stubEnv("PI_CODING_AGENT_DIR", "/tmp/ask-tool-tests-agent");
+		rmSync("/tmp/ask-tool-tests-agent/ask-tool.json", { force: true });
 	});
 
-	it("registers the tool with executionMode sequential", () => {
-		const { tool, api, flags } = setupHarness({
+	it("registers the tool and ask-configure command", () => {
+		const { tool, api, flags, commands } = setupHarness({
 			register: (pi) => askToolExtension(pi),
 		});
 		expect(api.registerTool).toHaveBeenCalledOnce();
@@ -37,6 +45,13 @@ describe("ask tool extension", () => {
 		expect(tool.name).toBe("ask");
 		expect(flags.has("ask-timeout")).toBe(true);
 		expect(flags.has("ask-notify")).toBe(true);
+		expect(commands.has("ask-configure")).toBe(true);
+	});
+
+	it("persists and reloads static ask configuration", () => {
+		const path = "/tmp/ask-tool-test-config.json";
+		writeAskConfig({ notify: true, timeoutSeconds: 12 }, path);
+		expect(readAskConfig(path)).toEqual({ notify: true, timeoutSeconds: 12 });
 	});
 
 	it("serves a description with the reserved labels verbatim and no omp-only features", () => {
@@ -44,6 +59,31 @@ describe("ask tool extension", () => {
 		expect(ASK_TOOL_DESCRIPTION).toContain("(Recommended)");
 		expect(ASK_TOOL_DESCRIPTION).toContain("multi");
 		expect(ASK_TOOL_DESCRIPTION).not.toMatch(/vocaliz|speech|notification/i);
+	});
+
+	it("configures values interactively, saves them, and reloads", async () => {
+		const { commands, ctx } = setupHarness({
+			mode: "tui",
+			hasUI: true,
+			ui: {
+				confirm: vi.fn(async () => true),
+				input: vi.fn(async () => "30"),
+			},
+			register: (pi) => askToolExtension(pi),
+		});
+		const handler = commands.get("ask-configure")?.handler;
+		expect(handler).toBeDefined();
+		if (!handler) return;
+		await handler("", ctx);
+		expect(readAskConfig("/tmp/ask-tool-tests-agent/ask-tool.json")).toEqual({
+			notify: true,
+			timeoutSeconds: 30,
+		});
+		expect(ctx.ui.notify).toHaveBeenCalledWith(
+			"Ask configuration saved. Reloading…",
+			"info",
+		);
+		expect(ctx.reload).toHaveBeenCalledOnce();
 	});
 
 	it("Path C: returns an error result in headless mode without throwing", async () => {
@@ -165,7 +205,7 @@ describe("ask tool extension", () => {
 		);
 		expect(events.emit).toHaveBeenCalledOnce();
 		expect(events.emit).toHaveBeenCalledWith("desktop-notify:request", {
-			title: "Ask",
+			title: "Which storage backend?",
 			body: "Waiting for input",
 			type: "ask",
 			urgency: "normal",

@@ -21,7 +21,7 @@ src/
   constants.ts             reserved labels, RECOMMENDED_SUFFIX, TIMEOUT_DETECTION_TOLERANCE_MS
   format.ts                pure helpers: recommended suffix, timeout auto-select, response text
   description.ts           LLM-facing tool description (port of omp prompts/tools/ask.md)
-  config.ts                flag/env → timeout/notify resolution (D2)
+  config.ts                static JSON + flag/env → timeout/notify resolution
   rpc-fallback.ts          Path B: per-question select/editor/confirm loop (exported AskUiContext)
   timers.ts                structural AbortLike/TimerGlobals (compiles without @types/node)
   dialog/
@@ -63,19 +63,23 @@ test changes.
    (the RPC path does not offer it) — this is documented in the README feature
    matrix and pinned by tests.
 6. **Timeout semantics.** Config: flag `--ask-timeout` > env
-   `PI_ASK_TIMEOUT_SECONDS` > default `0` (disabled). Countdown re-arms on any
-   key. `TIMEOUT_DETECTION_TOLERANCE_MS = 1000` distinguishes a UI-enforced
-   timeout from a user Esc in the RPC path.
-7. **No omp-only features.** No TTS (`vocaliz*`/`speech.*`), no
+   `PI_ASK_TIMEOUT_SECONDS` > global `ask-tool.json` > default `0` (disabled).
+   Notification config follows the same precedence. `/ask-configure` writes
+   the static JSON and reloads the extension. Countdown re-arms on any key.
+   `TIMEOUT_DETECTION_TOLERANCE_MS = 1000` distinguishes a UI-enforced timeout
+   from a user Esc in the RPC path.
+7. **Notification payload.** Enabled TUI notifications use the first question
+   text as the EventBus payload title, with `body: "Waiting for input"`.
+8. **No omp-only features.** No TTS (`vocaliz*`/`speech.*`), no
    `TERMINAL.sendNotification`, no plan-mode carve-out, no collab bridging.
    New code must not introduce them (a grep audit enforces this).
-8. **Zero runtime dependencies.** Imports only `@earendil-works/pi-*`
+9. **Zero runtime dependencies.** Imports only `@earendil-works/pi-*`
    (peers, resolved by pi's extension loader) and the standard library.
    `Type` is imported from `@earendil-works/pi-ai` (it re-exports typebox's
    `Type`); validation is structural in `schema.ts` — do not add direct
    `typebox` imports (vite cannot resolve them from outside pi-mono; the
    loader's virtual modules only cover `@earendil-works/*` and typebox paths).
-9. **Self-typing without @types/node.** `src/timers.ts` provides structural
+10. **Self-typing without @types/node.** `src/timers.ts` provides structural
    `AbortLike` / timer views so the package compiles with or without node
    types. Keep new code free of bare `process`/`setTimeout` references.
 

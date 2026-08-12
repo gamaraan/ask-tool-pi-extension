@@ -16,10 +16,7 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import type { Component, TUI } from "@earendil-works/pi-tui";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
-import {
-	resolveAskConfig,
-	supportsTerminalNotifications,
-} from "./config.ts";
+import { resolveAskConfig, supportsTerminalNotifications } from "./config.ts";
 import { ASK_TOOL_DESCRIPTION } from "./description.ts";
 import { AskDialogComponent } from "./dialog/ask-dialog-component.ts";
 import { bottomBorder, divider, fit, row, topBorder } from "./dialog/chrome.ts";
@@ -71,12 +68,14 @@ export function defineAskTool(
 
 			const config = resolveAskConfig((name) => pi.getFlag(name));
 			const timeoutMs = config.timeoutMs;
+			const notificationTitle =
+				params.questions[0]?.question.trim().slice(0, 256) || "Ask";
 
 			if (config.notify) {
 				ctx.ui.notify("Ask tool is waiting for input", "info");
 				if (ctx.mode === "tui" && supportsTerminalNotifications()) {
 					pi.events.emit("desktop-notify:request", {
-						title: "Ask",
+						title: notificationTitle,
 						body: "Waiting for input",
 						type: "ask",
 						urgency: "normal",

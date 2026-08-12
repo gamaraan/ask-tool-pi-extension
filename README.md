@@ -82,8 +82,10 @@ throwing.
 When `ask-notify` is on, the existing in-UI waiting notice is retained. For TUI
 asks in terminals advertising OSC 9/99 notifications (Kitty, Ghostty, WezTerm,
 iTerm2, or Warp), ask-tool also emits a best-effort
-`desktop-notify:request` EventBus event. The terminal owns focus handling, so a
-waiting notification is intended to appear only while its window is inactive.
+`desktop-notify:request` EventBus event whose title is the first ask question
+(and whose body remains `Waiting for input`). The terminal owns focus handling,
+so a waiting notification is intended to appear only while its window is
+inactive.
 Unknown/base terminals do not receive the EventBus request because native
 `notify-send` fallbacks cannot reliably determine terminal focus.
 
@@ -92,16 +94,30 @@ request, and when it is unavailable no action is required.
 
 ## Configuration
 
-pi extensions have no settings accessor, so configuration rides on CLI flags
-with environment fallbacks (flag wins over env, env wins over default):
+Ask-tool stores persistent defaults in the global `ask-tool.json` file under
+Pi's agent directory (normally `~/.pi/agent/ask-tool.json`). Configure it
+interactively with `/ask-configure`; the file is written and extensions are
+reloaded immediately when the wizard finishes.
 
-| Setting | Flag | Env | Default |
-| --- | --- | --- | --- |
-| Timeout in seconds (0 = disabled) | `--ask-timeout <seconds>` | `PI_ASK_TIMEOUT_SECONDS` | `0` (disabled) |
-| Best-effort waiting notification | `--ask-notify <off\|on>` | `PI_ASK_NOTIFY` | `off` |
+The effective precedence is flag > environment > static JSON > built-in
+default:
 
-Example: `pi --ask-timeout 30` auto-selects the recommended option 30 seconds
-after the dialog appears (the countdown resets on key presses).
+| Setting | Static JSON | Flag | Env | Default |
+| --- | --- | --- | --- | --- |
+| Timeout in seconds (0 = disabled) | `timeoutSeconds` | `--ask-timeout <seconds>` | `PI_ASK_TIMEOUT_SECONDS` | `0` (disabled) |
+| Best-effort waiting notification | `notify` | `--ask-notify <off\|on>` | `PI_ASK_NOTIFY` | `false` |
+
+Example static configuration:
+
+```json
+{
+  "notify": true,
+  "timeoutSeconds": 30
+}
+```
+
+Example: `pi --ask-timeout 30` overrides the saved timeout for that session;
+the countdown resets on key presses.
 
 ## Install & enable
 

@@ -16,8 +16,10 @@ continue to load and work unchanged when `@gamaraan/desktop-notify` is absent.
 - Emit only for the TUI dialog path (`ctx.mode === "tui"`) and only when the
   existing effective `ask-notify` setting is on. The existing `ctx.ui.notify`
   behavior remains as-is for every interactive UI mode.
-- Emit one plain object per ask invocation before the dialog is opened:
-  `{ title: "Ask", body: "Waiting for input", type: "ask", urgency: "normal", sound: "question" }`.
+- Emit one plain object per ask invocation before the dialog is opened. Its
+  title is the first question's text (trimmed to 256 characters, falling back
+  to `Ask`), and its body remains `Waiting for input`:
+  `{ title: questionText, body: "Waiting for input", type: "ask", urgency: "normal", sound: "question" }`.
   It is intentionally composed without importing desktop-notify types.
 - EventBus emission is fire-and-forget and must not alter cancellation,
   timeout, result, focus-restoration, or headless/RPC behavior. With no
