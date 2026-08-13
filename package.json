@@ -1,6 +1,6 @@
 {
 	"name": "@gamaraan/ask-tool",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "pi extension that ports the Oh My Pi (OMP) ask tool: interactive multiple-choice questions with rich TUI dialogs, recommended options, timeouts with auto-select, free-text answers, and multi-question paging.",
 	"keywords": ["pi-package", "omp", "ask", "interactive", "questions", "tui"],
 	"license": "MIT",
@@ -20,7 +20,8 @@
 		"node": ">=18"
 	},
 	"scripts": {
-		"test": "cd ../pi-mono/packages/coding-agent && npx vitest run test/ask-user-question",
+		"test": "bash ci/run-pi-mono-tests.sh test",
+		"lint:test": "bash ci/run-pi-mono-tests.sh lint",
 		"typecheck": "cd ../pi-mono && ./node_modules/.bin/tsgo --noEmit -p ../ask-tool/tsconfig.json",
 		"verify:package": "npm pack --dry-run --json"
 	},

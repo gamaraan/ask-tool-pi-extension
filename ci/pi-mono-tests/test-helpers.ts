@@ -4,10 +4,18 @@
  * while keeping snapshots stable (theme passthrough, no escape codes).
  */
 // pi-lens-ignore: typescript:2307
-import type { ExtensionAPI, ExtensionContext, Theme } from "@earendil-works/pi-coding-agent";
+import type {
+	ExtensionAPI,
+	ExtensionContext,
+	Theme,
+	// pi-lens-ignore: typescript:2307
+} from "@earendil-works/pi-coding-agent";
+// pi-lens-ignore: typescript:2307
 import type { TUI } from "@earendil-works/pi-tui";
+// pi-lens-ignore: typescript:2307
 import { vi } from "vitest";
-import type { AskToolInput } from "../../../../../ask-tool/src/types.ts";
+// pi-lens-ignore: typescript:2307
+import type { AskToolInput } from "../../src/types.ts";
 
 /** Theme whose style functions pass text through unchanged (ANSI-free snapshots). */
 export function fakeTheme(): Theme {
@@ -78,9 +86,15 @@ export interface ToolHarness {
 			onUpdate: undefined,
 			ctx: ExtensionContext,
 		): Promise<unknown>;
-		renderCall?(args: unknown, theme: Theme): { render(width: number): string[] };
+		renderCall?(
+			args: unknown,
+			theme: Theme,
+		): { render(width: number): string[] };
 		renderResult?(
-			result: { content: Array<{ type: string; text?: string }>; details?: unknown },
+			result: {
+				content: Array<{ type: string; text?: string }>;
+				details?: unknown;
+			},
 			options: unknown,
 			theme: Theme,
 		): { render(width: number): string[] };
@@ -91,6 +105,14 @@ export interface ToolHarness {
 		label?: string;
 	};
 	flags: Map<string, { type: string; default?: boolean | string }>;
+	commands: Map<
+		string,
+		{ handler: (args: string, ctx: ExtensionContext) => Promise<void> }
+	>;
+	events: {
+		emit: ReturnType<typeof vi.fn>;
+		on: ReturnType<typeof vi.fn>;
+	};
 	getFlag(name: string): boolean | string | undefined;
 }
 
@@ -106,9 +128,16 @@ export function setupHarness(
 	} = {},
 ): ToolHarness {
 	const flags = new Map<string, { type: string; default?: boolean | string }>();
+	const commands = new Map<
+		string,
+		{ handler: (args: string, ctx: ExtensionContext) => Promise<void> }
+	>();
 	const flagValues = new Map(Object.entries(options.flags ?? {}));
+	const events = { emit: vi.fn(), on: vi.fn(() => () => undefined) };
 	const harness: ToolHarness = {
 		flags,
+		commands,
+		events,
 		getFlag(name: string): boolean | string | undefined {
 			return flagValues.has(name) ? flagValues.get(name) : undefined;
 		},
@@ -116,16 +145,29 @@ export function setupHarness(
 
 	const registered: { tool?: unknown } = {};
 	const api = {
-		registerFlag: vi.fn((name: string, opts: { type: string; default?: boolean | string }) => {
-			flags.set(name, opts);
-			if (opts.default !== undefined && !flagValues.has(name)) {
-				flagValues.set(name, opts.default);
-			}
-		}),
+		registerFlag: vi.fn(
+			(name: string, opts: { type: string; default?: boolean | string }) => {
+				flags.set(name, opts);
+				if (opts.default !== undefined && !flagValues.has(name)) {
+					flagValues.set(name, opts.default);
+				}
+			},
+		),
 		registerTool: vi.fn((tool: unknown) => {
 			registered.tool = tool;
 		}),
+		registerCommand: vi.fn(
+			(
+				name: string,
+				command: {
+					handler: (args: string, ctx: ExtensionContext) => Promise<void>;
+				},
+			) => {
+				commands.set(name, command);
+			},
+		),
 		getFlag: harness.getFlag,
+		events,
 	} as unknown as ExtensionAPI;
 
 	(options.register ?? ((api) => void api))(api);
@@ -146,6 +188,7 @@ export function setupHarness(
 		ui,
 		cwd: "/tmp",
 		abort: vi.fn(),
+		reload: vi.fn(async () => undefined),
 		signal: options.signal,
 	} as unknown as ExtensionContext;
 
@@ -156,7 +199,9 @@ export function setupHarness(
 }
 
 /** A valid single-question params fixture. */
-export function singleQuestionParams(overrides: Partial<AskToolInput["questions"][number]> = {}): AskToolInput {
+export function singleQuestionParams(
+	overrides: Partial<AskToolInput["questions"][number]> = {},
+): AskToolInput {
 	return {
 		questions: [
 			{

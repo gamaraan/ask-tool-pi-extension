@@ -5,18 +5,29 @@
  * sequences (pi-tui escape codes), and assert `render` output and the
  * `onSubmit`/`onCancel` payloads.
  */
+// pi-lens-ignore: typescript:2307
 import { describe, expect, it, vi } from "vitest";
-import { OTHER_OPTION } from "../../../../../ask-tool/src/constants.ts";
-import { AskDialogComponent } from "../../../../../ask-tool/src/dialog/ask-dialog-component.ts";
-import type { AskDialogQuestion, AskDialogSubmitResult } from "../../../../../ask-tool/src/types.ts";
+import { OTHER_OPTION } from "../../src/constants.ts";
+import { AskDialogComponent } from "../../src/dialog/ask-dialog-component.ts";
+import type {
+	AskDialogQuestion,
+	AskDialogSubmitResult,
+} from "../../src/types.ts";
 import { fakeTheme, fakeTui, keys } from "./test-helpers.ts";
 
-function setup(questions: AskDialogQuestion[], options: { timeout?: number } = {}) {
+function setup(
+	questions: AskDialogQuestion[],
+	options: { timeout?: number } = {},
+) {
 	const onSubmit = vi.fn<(result: AskDialogSubmitResult) => void>();
 	const onCancel = vi.fn<() => void>();
 	const tui = fakeTui();
 	const theme = fakeTheme();
-	const component = new AskDialogComponent(questions, { onSubmit, onCancel }, { ...options, tui, theme });
+	const component = new AskDialogComponent(
+		questions,
+		{ onSubmit, onCancel },
+		{ ...options, tui, theme },
+	);
 	const render = () => component.render(80).join("\n");
 	return { component, onSubmit, onCancel, render, tui };
 }
@@ -141,7 +152,11 @@ describe("AskDialogComponent", () => {
 	it("T7.3 multi-question paging: answer Q1, tab to Q2, back preserves the answer", () => {
 		const { component, render } = setup([
 			singleQuestion,
-			{ id: "auth", question: "Which auth method?", options: [{ label: "JWT" }, { label: "OAuth2" }] },
+			{
+				id: "auth",
+				question: "Which auth method?",
+				options: [{ label: "JWT" }, { label: "OAuth2" }],
+			},
 		]);
 		component.handleInput(keys.enter); // answer Q1 (PostgreSQL recommended)
 		let out = render();
@@ -181,14 +196,21 @@ describe("AskDialogComponent", () => {
 
 	it("T7.5 header chip renders in the tab bar", () => {
 		const { render } = setup([
-			{ id: "s", header: "Storage", question: "Which storage backend?", options: [{ label: "SQLite" }] },
+			{
+				id: "s",
+				header: "Storage",
+				question: "Which storage backend?",
+				options: [{ label: "SQLite" }],
+			},
 			{ id: "a", question: "Which auth method?", options: [{ label: "JWT" }] },
 		]);
 		expect(render()).toContain("1. Storage");
 	});
 
 	it("T7.4 Esc just after show is a cancel, not a timeout (tolerance window)", async () => {
-		const { component, onCancel, onSubmit } = setup([singleQuestion], { timeout: 60 });
+		const { component, onCancel, onSubmit } = setup([singleQuestion], {
+			timeout: 60,
+		});
 		component.handleInput(keys.escape);
 		expect(onCancel).toHaveBeenCalledTimes(1);
 		await new Promise((resolve) => setTimeout(resolve, 120));
@@ -214,7 +236,11 @@ describe("AskDialogComponent", () => {
 		const result = onSubmit.mock.calls[0]?.[0];
 		if (result?.kind === "submit") {
 			expect(result.results[0]?.id).toBe("storage");
-			expect(result.results[0]?.options).toEqual(["SQLite", "PostgreSQL", "MongoDB"]);
+			expect(result.results[0]?.options).toEqual([
+				"SQLite",
+				"PostgreSQL",
+				"MongoDB",
+			]);
 		}
 	});
 });

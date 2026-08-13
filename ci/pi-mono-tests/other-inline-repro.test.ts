@@ -15,10 +15,14 @@
 
 // pi-lens-ignore: typescript:2307
 import { Container, type Terminal, TuiAltScreen } from "@earendil-works/pi-tui";
+// pi-lens-ignore: typescript:2307
 import { describe, expect, it } from "vitest";
-import { AskDialogComponent } from "../../../../../ask-tool/src/dialog/ask-dialog-component.ts";
-import type { AskDialogSubmitResult } from "../../../../../ask-tool/src/types.ts";
-import { initTheme, theme } from "../../src/modes/interactive/theme/theme.ts";
+import {
+	initTheme,
+	theme,
+} from "../../../pi-mono/packages/coding-agent/src/modes/interactive/theme/theme.ts";
+import { AskDialogComponent } from "../../src/dialog/ask-dialog-component.ts";
+import type { AskDialogSubmitResult } from "../../src/types.ts";
 import { keys } from "./test-helpers.ts";
 
 class StubTerminal implements Terminal {
@@ -61,8 +65,14 @@ const questions = [
 		id: "storage",
 		question: "Which storage backend should I use?",
 		options: [
-			{ label: "SQLite", description: "File-based, zero config, single-writer." },
-			{ label: "PostgreSQL", description: "Server-based, feature-rich, concurrent access." },
+			{
+				label: "SQLite",
+				description: "File-based, zero config, single-writer.",
+			},
+			{
+				label: "PostgreSQL",
+				description: "Server-based, feature-rich, concurrent access.",
+			},
 			{ label: "MongoDB", description: "Document store with flexible schema." },
 		],
 		recommended: 0,
@@ -70,7 +80,11 @@ const questions = [
 ];
 
 function plain(text: string): string {
-	return text.replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, "");
+	const escapeCharacter = String.fromCharCode(27);
+	return text.replace(
+		new RegExp(`${escapeCharacter}\\[[0-9;?]*[a-zA-Z]`, "g"),
+		"",
+	);
 }
 
 describe("Other inline editor visibility (real TUI)", () => {

@@ -21,7 +21,7 @@ src/
   constants.ts             reserved labels, RECOMMENDED_SUFFIX, TIMEOUT_DETECTION_TOLERANCE_MS
   format.ts                pure helpers: recommended suffix, timeout auto-select, response text
   description.ts           LLM-facing tool description (port of omp prompts/tools/ask.md)
-  config.ts                flag/env → timeout/notify resolution (D2)
+  config.ts                static JSON + flag/env → timeout/notify resolution
   rpc-fallback.ts          Path B: per-question select/editor/confirm loop (exported AskUiContext)
   timers.ts                structural AbortLike/TimerGlobals (compiles without @types/node)
   dialog/
@@ -30,10 +30,10 @@ src/
     chrome.ts                box-drawing helpers (port of omp overlay-box.ts)
 ```text
 
-Tests live in **pi-mono** (not here) so they reuse its vitest alias graph:
-`pi-mono/packages/coding-agent/test/ask-user-question/`. This is a deliberate
-arrangement: the only files this project adds to
-pi-mono are those test files.
+Tests live in `ci/pi-mono-tests/` inside this repository. They run from this
+repository using pi-mono's installed Vitest package and source tree as a
+read-only test host; pi-mono itself must never receive committed feature or
+test changes.
 
 ## Architecture invariants
 
@@ -49,8 +49,8 @@ pi-mono are those test files.
    `pi-mono/packages/*/src/`. In particular: no `ExtensionUIContext.select`
    upgrades, no `askDialog`/`editor` members, no settings accessor, no
    plan-mode signal. Those are follow-ups (see Roadmap) in separate PRs.
-   The only pi-mono additions allowed are test files under
-   `packages/coding-agent/test/`.
+   CI may temporarily stage tests into a fresh pi-mono checkout, but no
+   pi-mono repository changes are part of this project.
 3. **`executionMode: "sequential"`** — the pi analogue of omp's
    `concurrency = "exclusive"`. The dialog is a single shared UI surface.
 4. **Esc cancels ⇒ `ctx.abort()` + cancelled result text** (no throw; pi's
@@ -63,37 +63,37 @@ pi-mono are those test files.
    (the RPC path does not offer it) — this is documented in the README feature
    matrix and pinned by tests.
 6. **Timeout semantics.** Config: flag `--ask-timeout` > env
-   `PI_ASK_TIMEOUT_SECONDS` > default `0` (disabled). Countdown re-arms on any
-   key. `TIMEOUT_DETECTION_TOLERANCE_MS = 1000` distinguishes a UI-enforced
-   timeout from a user Esc in the RPC path.
-7. **No omp-only features.** No TTS (`vocaliz*`/`speech.*`), no
+   `PI_ASK_TIMEOUT_SECONDS` > global `ask-tool.json` > default `0` (disabled).
+   Notification config follows the same precedence. `/ask-configure` writes
+   the static JSON and reloads the extension. Countdown re-arms on any key.
+   `TIMEOUT_DETECTION_TOLERANCE_MS = 1000` distinguishes a UI-enforced timeout
+   from a user Esc in the RPC path.
+7. **Notification payload.** Enabled TUI notifications use the first question
+   text as the EventBus payload title, with `body: "Waiting for input"`.
+8. **No omp-only features.** No TTS (`vocaliz*`/`speech.*`), no
    `TERMINAL.sendNotification`, no plan-mode carve-out, no collab bridging.
    New code must not introduce them (a grep audit enforces this).
-8. **Zero runtime dependencies.** Imports only `@earendil-works/pi-*`
+9. **Zero runtime dependencies.** Imports only `@earendil-works/pi-*`
    (peers, resolved by pi's extension loader) and the standard library.
    `Type` is imported from `@earendil-works/pi-ai` (it re-exports typebox's
    `Type`); validation is structural in `schema.ts` — do not add direct
    `typebox` imports (vite cannot resolve them from outside pi-mono; the
    loader's virtual modules only cover `@earendil-works/*` and typebox paths).
-9. **Self-typing without @types/node.** `src/timers.ts` provides structural
+10. **Self-typing without @types/node.** `src/timers.ts` provides structural
    `AbortLike` / timer views so the package compiles with or without node
    types. Keep new code free of bare `process`/`setTimeout` references.
 
 ## Commands
 
 ```bash
-# Tests (80 cases across 8 files)
-cd ../pi-mono/packages/coding-agent && npx vitest run test/ask-user-question
+# Tests (run from ask-tool; pi-mono is read-only dependency source)
+npm test
 
-# Full regression sweep in pi-mono (no new failures allowed)
-cd ../pi-mono/packages/coding-agent && npx vitest run
+# Typecheck the package against pi-mono dependency sources
+npm run typecheck
 
-# Typecheck the package + the pi-mono graph
-cd ../pi-mono && ./node_modules/.bin/tsgo --noEmit
-cd ../pi-mono && ./node_modules/.bin/tsgo --noEmit -p ../ask-tool/tsconfig.json
-
-# Lint (monorepo biome covers the test files)
-cd ../pi-mono && npx biome check packages/coding-agent/test/ask-user-question/
+# Lint the repository-owned tests
+npm run lint:test
 
 # Package inspection
 npm pack --dry-run
@@ -113,8 +113,8 @@ baseline.
   user-visible contract matters (response text is golden-tested in
   `format.test.ts`). Divergences from omp are deliberate and must be
   documented in the README (feature matrix) and pinned by a test.
-- Test files: `test/ask-user-question/` in pi-mono; imports use the
-  `../../../../../ask-tool/src/...` relative path (5 levels up).
+- Test files: `ci/pi-mono-tests/` in this repository. Ask-tool imports use
+  `../../src/...`; pi-mono imports are read-only test-host references.
 - Mock style: `test-helpers.ts` provides `fakeTheme` (ANSI-free passthrough),
   `fakeTui`, `setupHarness` (mock API + ctx), and pi key sequences (`keys`).
 
